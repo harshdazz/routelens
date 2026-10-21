@@ -87,6 +87,30 @@
         "command": "routelens.openFirstRequest",
         "title": "Open First Request",
         "category": "RouteLens"
+      },
+      {
+        "command": "routelens.scanRoutes",
+        "title": "Scan Routes",
+        "category": "RouteLens",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "routelens.sendRoute",
+        "title": "Send Route",
+        "category": "RouteLens",
+        "icon": "$(play)"
+      },
+      {
+        "command": "routelens.openRouteRequest",
+        "title": "Open Request",
+        "category": "RouteLens",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "routelens.openRouteSource",
+        "title": "Go to Code",
+        "category": "RouteLens",
+        "icon": "$(code)"
       }
     ],
     "menus": {
@@ -117,6 +141,52 @@
         {
           "command": "routelens.openFirstRequest",
           "when": "false"
+        },
+        {
+          "command": "routelens.sendRoute",
+          "when": "false"
+        },
+        {
+          "command": "routelens.openRouteRequest",
+          "when": "false"
+        },
+        {
+          "command": "routelens.openRouteSource",
+          "when": "false"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "routelens.scanRoutes",
+          "when": "view == routelens.routes",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "routelens.sendRoute",
+          "when": "view == routelens.routes && viewItem == route",
+          "group": "inline@1"
+        },
+        {
+          "command": "routelens.openRouteRequest",
+          "when": "view == routelens.routes && viewItem == route",
+          "group": "inline@2"
+        },
+        {
+          "command": "routelens.sendRoute",
+          "when": "view == routelens.routes && viewItem == route",
+          "group": "1_route@1"
+        },
+        {
+          "command": "routelens.openRouteRequest",
+          "when": "view == routelens.routes && viewItem == route",
+          "group": "1_route@2"
+        },
+        {
+          "command": "routelens.openRouteSource",
+          "when": "view == routelens.routes && viewItem == route",
+          "group": "1_route@3"
         }
       ]
     },
@@ -202,6 +272,17 @@
             ]
           },
           {
+            "id": "routes",
+            "title": "See every route",
+            "description": "RouteLens reads your Next.js and Express code and lists every API route in its sidebar, with a ▶ Send button above each handler. Each route gets a request file, with a sample body from its zod schema.\n[Show routes](command:routelens.routes.focus)",
+            "media": {
+              "markdown": "media/walkthrough/routes.md"
+            },
+            "completionEvents": [
+              "onView:routelens.routes"
+            ]
+          },
+          {
             "id": "sendRequest",
             "title": "Send your first request",
             "description": "Click ▶ Send request at the top of the file. If your server is off, RouteLens offers to start it and sends again when it is ready.\n[Open first request](command:routelens.openFirstRequest)",
@@ -224,6 +305,31 @@
             ]
           }
         ]
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "routelens",
+          "title": "RouteLens",
+          "icon": "media/routelens.svg"
+        }
+      ]
+    },
+    "views": {
+      "routelens": [
+        {
+          "id": "routelens.routes",
+          "name": "Routes",
+          "icon": "media/routelens.svg",
+          "contextualTitle": "RouteLens"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "routelens.routes",
+        "contents": "RouteLens lists the API routes it finds in your code: Next.js route handlers (app/**/route.ts), pages/api, and Express routers.\n[Scan again](command:routelens.scanRoutes)\nNothing here? Check that next or express is in your package.json. RouteLens reads your code; it never runs it."
       }
     ]
   },

@@ -157,6 +157,15 @@ export async function detectServer(
   return { serverDir, address: candidates[0], candidates, start };
 }
 
+/**
+ * The folder of the package that holds the API server: `root`, or a workspace package in a
+ * monorepo (the same choice `detectServer` makes). `undefined` when `root` has no package.json.
+ */
+export async function findServerDir(root: string): Promise<string | undefined> {
+  const rootPackage = await readPackageJson(root);
+  return rootPackage ? (await findServerPackage(root, rootPackage)).dir : undefined;
+}
+
 /** "`next dev -p 3001`" in package.json · PORT in .env · listen() in server.js:11 */
 export function describeClue(candidate: AddressCandidate): string {
   const { clue } = candidate;

@@ -32,6 +32,18 @@ export function serializeRequest(request: ApiRequestInput): string {
     headers: request.headers ?? {},
     query: request.query ?? {},
     body: request.body ?? { type: "none" },
+    ...(request.route === undefined
+      ? {}
+      : {
+          route: {
+            key: request.route.key,
+            ...(request.route.file === undefined ? {} : { file: request.route.file }),
+            // Sorted, so the file only changes when a fingerprint does.
+            generated: Object.fromEntries(
+              Object.entries(request.route.generated ?? {}).sort(([a], [b]) => a.localeCompare(b)),
+            ),
+          },
+        }),
   };
   return `${JSON.stringify(ordered, null, 2)}\n`;
 }

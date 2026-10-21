@@ -1,10 +1,15 @@
+import path from "node:path";
 import * as vscode from "vscode";
 import { RequestCodeLensProvider } from "./codeLens";
 import { newRequestCommand } from "./commands/newRequest";
+import { openRouteRequestCommand, scanRoutesCommand, sendRouteCommand } from "./commands/routes";
 import { sendRequestCommand } from "./commands/sendRequest";
 import { Environments, currentProjectRoot, hasRouteLensFolder } from "./environments";
 import { ResponsePanel } from "./responsePanel";
 import { ResultStore } from "./results";
+import { ROUTE_SOURCE_SELECTOR, RouteCodeLensProvider } from "./routeCodeLens";
+import { RouteIndex } from "./routeIndex";
+import { RoutesTreeProvider, routeTargetOf } from "./routesView";
 import { ServerManager } from "./serverManager";
 import {
   autoSetUp,
@@ -16,7 +21,8 @@ import {
 
 /**
  * Runs in any folder with a package.json, so it must stay cheap (ADR-0006): register things
- * here, and do the small amount of file reading (detection) after activation, without blocking.
+ * here, and do the file reading (detection, then route scanning) after activation, without
+ * blocking. The TypeScript parser used by the scanner is only loaded by the first scan.
  */
 export function activate(context: vscode.ExtensionContext): void {
   const output = vscode.window.createOutputChannel("RouteLens");
@@ -25,6 +31,13 @@ export function activate(context: vscode.ExtensionContext): void {
   const environments = new Environments(context);
   const server = new ServerManager(context, output);
   const codeLens = new RequestCodeLensProvider(results);
+  const routes = new RouteIndex(context, output);
+  const routeLens = new RouteCodeLensProvider(routes, results);
+  const routesTree = new RoutesTreeProvider(routes, results);
+  const routesView = vscode.window.createTreeView("routelens.routes", {
+    treeDataProvider: routesTree,
+    showCollapseAll: true,
+  });
 
   const refreshProjectState = async (): Promise<void> => {
     const folders = vscode.workspace.workspaceFolders ?? [];
@@ -38,8 +51,12 @@ export function activate(context: vscode.ExtensionContext): void {
   const setup: SetupDeps = {
     context,
     output,
-    onProjectChanged: () => void refreshProjectState(),
+    onProjectChanged: () => {
+      void refreshProjectState();
+      void routes.refreshAll();
+    },
   };
+  const routeDeps = { index: routes, setup };
   /** Zero setup for every folder, then update the status bar and walkthrough. */
   const startUp = async (): Promise<void> => {
     for (const folder of vscode.workspace.workspaceFolders ?? []) {
@@ -52,6 +69,7 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     }
     await refreshProjectState();
+    await routes.refreshAll();
   };
 
   context.subscriptions.push(
@@ -61,6 +79,32 @@ export function activate(context: vscode.ExtensionContext): void {
     environments,
     server,
     codeLens,
+    routes,
+    routeLens,
+    routesTree,
+    routesView,
+    routes.onDidChange(() => {
+      routesView.description = routesTree.description();
+    }),
+    vscode.commands.registerCommand("routelens.sendRoute", (target?: unknown) =>
+      sendRouteCommand(routeTargetOf(target), routeDeps),
+    ),
+    vscode.commands.registerCommand("routelens.openRouteRequest", (target?: unknown) =>
+      openRouteRequestCommand(routeTargetOf(target), routeDeps),
+    ),
+    vscode.commands.registerCommand("routelens.openRouteSource", async (target?: unknown) => {
+      const found = routeTargetOf(target);
+      const route = found && routes.find(found);
+      if (!route) return;
+      const line = Math.max(0, route.route.line - 1);
+      await vscode.window.showTextDocument(
+        vscode.Uri.file(path.join(route.project.root, route.route.file)),
+        { selection: new vscode.Range(line, 0, line, 0) },
+      );
+    }),
+    vscode.commands.registerCommand("routelens.scanRoutes", (options?: { quiet?: boolean }) =>
+      scanRoutesCommand(routeDeps, !options?.quiet),
+    ),
     vscode.commands.registerCommand("routelens.sendRequest", (uri?: vscode.Uri) =>
       sendRequestCommand({ uri, panel, output, results, server, environments }),
     ),
@@ -100,6 +144,7 @@ export function activate(context: vscode.ExtensionContext): void {
       { scheme: "file", pattern: "**/*.req.json" },
       codeLens,
     ),
+    vscode.languages.registerCodeLensProvider(ROUTE_SOURCE_SELECTOR, routeLens),
     vscode.workspace.onDidGrantWorkspaceTrust(() => void startUp()),
     vscode.workspace.onDidChangeWorkspaceFolders(() => void startUp()),
   );

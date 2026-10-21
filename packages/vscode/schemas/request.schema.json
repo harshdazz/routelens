@@ -128,6 +128,36 @@
         }
       ],
       "description": "Request body."
+    },
+    "route": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The route in your code this request was made from, e.g. \"POST /api/posts/:id\"."
+        },
+        "file": {
+          "description": "Where the route handler is, relative to the project root.",
+          "type": "string",
+          "minLength": 1
+        },
+        "generated": {
+          "default": {},
+          "description": "Fingerprints of the values RouteLens wrote. When the route changes, RouteLens updates a value only while it still matches its fingerprint, so your edits are kept. Leave these as they are.",
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "key"
+      ],
+      "description": "Set by RouteLens on requests it made from a route in your code."
     }
   },
   "required": [

@@ -11,7 +11,8 @@ import {
 } from "./helpers";
 
 // Runs inside a real VS Code with a fresh project (see ../runTest.mjs): a package.json with
-// `"dev": "node server.js"` and a server.js that listens on ROUTELENS_E2E_PORT. No .routelens/.
+// `"dev": "node server.js"`, a server.js that listens on ROUTELENS_E2E_PORT, and routes.js
+// (Express code that is only read, never run). No .routelens/.
 
 const workspace = process.env.ROUTELENS_E2E_WORKSPACE ?? "";
 const port = Number(process.env.ROUTELENS_E2E_PORT);
@@ -19,7 +20,25 @@ const environmentFile = path.join(workspace, ".routelens", "environments", "loca
 const firstRequest = vscode.Uri.file(
   path.join(workspace, ".routelens", "requests", "first-request.req.json"),
 );
+const routesFile = vscode.Uri.file(path.join(workspace, "routes.js"));
 const settings = () => vscode.workspace.getConfiguration("routelens");
+
+/** What `routelens.scanRoutes` returns (see src/commands/routes.ts). */
+type ScannedProject = {
+  root: string;
+  routes: Array<{ key: string }>;
+  drafts: Record<string, string>;
+};
+const scannedRoutes = () =>
+  waitFor("routes", async () => {
+    const projects = await vscode.commands.executeCommand<ScannedProject[]>(
+      "routelens.scanRoutes",
+      {
+        quiet: true,
+      },
+    );
+    return projects.some((project) => project.routes.length > 0) ? projects : undefined;
+  });
 const serverStopped = () =>
   waitFor("the server to stop", async () => ((await isPortOpen(port)) ? undefined : true));
 
@@ -64,6 +83,10 @@ suite("RouteLens zero setup", () => {
       "routelens.stopServer",
       "routelens.selectEnvironment",
       "routelens.showLastResponse",
+      "routelens.scanRoutes",
+      "routelens.sendRoute",
+      "routelens.openRouteRequest",
+      "routelens.openRouteSource",
     ]) {
       assert.ok(commands.includes(command), `${command} is registered`);
     }
@@ -98,6 +121,76 @@ suite("RouteLens zero setup", () => {
     assert.match(inline ?? "", /^✓ 200 OK · [\d.]+ m?s$/);
     // What a click on the inline result runs.
     await vscode.commands.executeCommand("routelens.showLastResponse", firstRequest);
+  });
+
+  test("finds the routes in the code and makes a request for each (M3)", async () => {
+    const [project] = await scannedRoutes();
+    assert.ok(project);
+    assert.deepEqual(
+      project.routes.map((route) => route.key),
+      ["GET /api/health", "POST /api/items"],
+    );
+    const draft = JSON.parse(await readFile(project.drafts["POST /api/items"] ?? "", "utf8"));
+    assert.equal(draft.url, "{{baseUrl}}/api/items");
+    assert.deepEqual(draft.body, { type: "json", content: { name: "example", qty: 1 } });
+  });
+
+  test("shows ▶ Send above each route handler", async () => {
+    await vscode.window.showTextDocument(routesFile);
+    const lenses = await waitFor("route code lenses", async () => {
+      const found = await vscode.commands.executeCommand<vscode.CodeLens[]>(
+        "vscode.executeCodeLensProvider",
+        routesFile,
+      );
+      return found.length >= 2 ? found : undefined;
+    });
+    assert.deepEqual(
+      lenses.map((lens) => [lens.range.start.line + 1, lens.command?.title]),
+      [
+        [11, "$(play) Send GET /api/health"],
+        [13, "$(play) Send POST /api/items"],
+      ],
+    );
+  });
+
+  test("▶ Send on a route sends its request and shows the result above the handler", async () => {
+    const [project] = await scannedRoutes();
+    const result = await vscode.commands.executeCommand<SendResult>("routelens.sendRoute", {
+      root: project?.root,
+      key: "POST /api/items",
+    });
+    assert.equal(result?.kind === "response" && result.view.response.status, 200);
+    // The test server echoes the path it was called with.
+    const body =
+      result?.kind === "response" ? (result.view.response as { body?: string }).body : "";
+    assert.match(body ?? "", /"path":"\/api\/items"/);
+    const titles = await lensTitles(routesFile);
+    assert.ok(
+      titles.some((title) => /^✓ 200 OK · [\d.]+ m?s$/.test(title)),
+      titles.join(" | "),
+    );
+  });
+
+  test("when the code changes, the request follows and keeps your edits", async () => {
+    const [project] = await scannedRoutes();
+    const draftFile = project?.drafts["POST /api/items"] ?? "";
+    const draft = JSON.parse(await readFile(draftFile, "utf8"));
+    draft.body.content.name = "My item"; // the user's edit
+    await writeFile(draftFile, `${JSON.stringify(draft, null, 2)}\n`);
+
+    const source = await readFile(routesFile.fsPath, "utf8");
+    await writeFile(
+      routesFile.fsPath,
+      source.replace(
+        "qty: z.number().int().positive(),",
+        "qty: z.number().int().positive(),\n  tags: z.array(z.string()).min(1),",
+      ),
+    );
+    const content = await waitFor("the draft to follow the schema", async () => {
+      const current = JSON.parse(await readFile(draftFile, "utf8"));
+      return "tags" in current.body.content ? current.body.content : undefined;
+    });
+    assert.deepEqual(content, { name: "My item", qty: 1, tags: ["example"] });
   });
 
   test("with autoStartServer = always, Send starts a stopped server and sends again", async () => {

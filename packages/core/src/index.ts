@@ -8,12 +8,14 @@ export {
   parseRequest,
   requestBodySchema,
   requestSchema,
+  routeLinkSchema,
   type ApiRequest,
   type ApiRequestInput,
   type Environment,
   type EnvironmentInput,
   type HttpMethod,
   type RequestBody,
+  type RouteLink,
 } from "./model.js";
 export {
   findVariables,
@@ -81,3 +83,24 @@ export {
   type StartScriptName,
 } from "./detect/scripts.js";
 export { listWorkspacePackages, parsePnpmWorkspace, serverScore } from "./detect/workspaces.js";
+export { findServerDir } from "./detect/detect.js";
+export { scanRoutes, listSourceFiles, type ScanOptions } from "./scanner/scan.js";
+export type { DetectedRoute, RouteFramework, ScanResult, SkippedRoute } from "./scanner/routes.js";
+export type { RouteBody } from "./scanner/body.js";
+export {
+  joinRoutePath,
+  nextRoutePath,
+  routeKey,
+  routeParams,
+  samplePath,
+} from "./scanner/paths.js";
+export {
+  createRouteDraft,
+  draftRequest,
+  findRouteDrafts,
+  fingerprint,
+  syncRouteDrafts,
+  updateDraft,
+  type DraftSyncOptions,
+  type DraftSyncResult,
+} from "./scanner/drafts.js";

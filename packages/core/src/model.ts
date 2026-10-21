@@ -24,6 +24,25 @@ export const requestBodySchema = z
   ])
   .describe("Request body.");
 
+export const routeLinkSchema = z
+  .object({
+    key: z
+      .string()
+      .min(1)
+      .describe('The route in your code this request was made from, e.g. "POST /api/posts/:id".'),
+    file: z
+      .string()
+      .min(1)
+      .optional()
+      .describe("Where the route handler is, relative to the project root."),
+    generated: stringMap
+      .default({})
+      .describe(
+        "Fingerprints of the values RouteLens wrote. When the route changes, RouteLens updates a value only while it still matches its fingerprint, so your edits are kept. Leave these as they are.",
+      ),
+  })
+  .describe("Set by RouteLens on requests it made from a route in your code.");
+
 export const requestSchema = z
   .object({
     version: z.literal(1).describe("File format version."),
@@ -39,6 +58,7 @@ export const requestSchema = z
       .describe("Header name to value. Values may contain {{variables}}."),
     query: stringMap.default({}).describe("Query parameters appended to the URL."),
     body: requestBodySchema.default({ type: "none" }),
+    route: routeLinkSchema.optional(),
   })
   .describe("A RouteLens request (.req.json).");
 
@@ -57,6 +77,7 @@ export type ApiRequest = z.output<typeof requestSchema>;
 /** A request as written in a file (optional fields may be missing). */
 export type ApiRequestInput = z.input<typeof requestSchema>;
 export type RequestBody = z.output<typeof requestBodySchema>;
+export type RouteLink = z.output<typeof routeLinkSchema>;
 export type Environment = z.output<typeof environmentSchema>;
 /** An environment as written in a file (`variables` may be missing). */
 export type EnvironmentInput = z.input<typeof environmentSchema>;

@@ -61,19 +61,24 @@ Details decided while building (detection order, monorepos, tasks, first-click r
 
 **Acceptance:** on a fresh Next.js fixture with its server off, install → click Send → 200, with no typed commands and no hand-written files. Tests green in CI. ✅ `pnpm test:acceptance` (2026-10-21): real VS Code 1.143, fresh copy of `fixtures/next-default` (Next.js 16), server off → Send → click "▶ Start server" → `next dev` starts → request sent again → `✓ 200 OK`, in about 10 s. `pnpm test:e2e` (8 tests) passes locally and is now a CI step; CI has not run it yet because nothing is pushed.
 
-## M3 — Reads your code ⬜ (target 2026-11-04)
+## M3 — Reads your code 🟡 built and verified, F5 hand check left (2026-10-21, target was 2026-11-04)
 
-- [ ] Fixture projects: Next.js App Router, Next.js Pages API, Express
-- [ ] Scanner: Next.js App Router (`app/**/route.ts` exported methods, dynamic `[id]` segments)
-- [ ] Scanner: Pages API (`pages/api/**`)
-- [ ] Scanner: Express (`app.get`, `router.post`, mounted routers)
-- [ ] zod body schema → valid sample body
-- [ ] A draft request is created automatically for every detected route
-- [ ] "▶ Send" CodeLens above each detected route handler
-- [ ] Routes tree view in the sidebar
-- [ ] Drift: when a route changes, its draft request updates itself (fields the user edited are kept)
+Reads code with the TypeScript parser and never runs it ([ADR-0007](decisions/0007-route-scanner-static-parsing.md)).
 
-**Acceptance:** 95%+ of fixture routes detected; a sample body passes the route's own zod validation.
+- [x] Fixture projects: Next.js App Router, Next.js Pages API, Express (`fixtures/next-app-routes`, `next-pages-api`, `express-routes`)
+- [x] Scanner: Next.js App Router (`app/**/route.ts` exported methods, dynamic `[id]` segments)
+- [x] Scanner: Pages API (`pages/api/**`)
+- [x] Scanner: Express (`app.get`, `router.post`, mounted routers)
+- [x] zod body schema → valid sample body
+- [x] A draft request is created automatically for every detected route
+- [x] "▶ Send" CodeLens above each detected route handler
+- [x] Routes tree view in the sidebar
+- [x] Drift: when a route changes, its draft request updates itself (fields the user edited are kept)
+- [ ] Tried by hand with F5 (Harsh): open `fixtures/express-routes` in the F5 window. Check the Routes view, the ▶ Send buttons, the "found N routes" message and a drift edit
+
+Details decided while building (fingerprints in the `route` field, renames, deleted drafts, trust) are in [ADR-0007](decisions/0007-route-scanner-static-parsing.md).
+
+**Acceptance:** 95%+ of fixture routes detected; a sample body passes the route's own zod validation. ✅ (2026-10-21) 36 of 36 fixture routes detected (`scan.test.ts` checks each one). All 10 routes that validate with zod get a sample that their own schema accepts: `routeSamples.test.ts` loads the real schema from the fixture and runs it with the real zod. `zodSample.test.ts` checks about 100 more zod expressions the same way. `pnpm test:e2e` (12 tests, real VS Code 1.143) covers scanning, ▶ Send on a route and drift.
 
 ## M4 — Autopilot ⬜ (target 2026-11-11)
 

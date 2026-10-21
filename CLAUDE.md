@@ -42,10 +42,10 @@ In VS Code, press **F5** ("Run RouteLens Extension") to launch a dev copy of VS 
 
 ### Layout
 
-- `packages/core` — editor-independent logic: request model, variables, HTTP engine, file storage, `detect` (server address, package manager, start script) and port checks. **Never import `vscode` here.**
-- `packages/vscode` — the VS Code extension (commands, CodeLens with inline results, response panel, server manager, environment picker, walkthrough). Thin layer over core.
+- `packages/core` — editor-independent logic: request model, variables, HTTP engine, file storage, `detect` (server address, package manager, start script), port checks and `scanner` (routes, zod samples, drafts; reads code with the TypeScript parser, never runs it). **Never import `vscode` here.**
+- `packages/vscode` — the VS Code extension (commands, CodeLens with inline results, Routes view, route CodeLens, response panel, server manager, environment picker, walkthrough). Thin layer over core.
 - `examples/` — sample `.routelens/` requests, environments and a demo server.
-- `fixtures/` — small fake projects for the detection tests (see `fixtures/README.md`).
+- `fixtures/` — small fake projects for the detection and scanner tests (see `fixtures/README.md`).
 
 ### Engineering rules
 

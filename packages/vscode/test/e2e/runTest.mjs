@@ -37,12 +37,41 @@ function isPortOpen(port) {
 /**
  * A fresh project with no .routelens/ folder: a package.json with a `dev` script and a tiny
  * server with no dependencies. RouteLens must find `listen(<port>)` by itself.
+ * routes.js is Express code that is never run: RouteLens only reads it (M3), and the tiny
+ * server answers every path, so its routes can be sent.
  */
 async function tinyProject(workspace) {
   const port = await freePort();
+  const pkg = {
+    name: "e2e-app",
+    private: true,
+    scripts: { dev: "node server.js" },
+    dependencies: { express: "^5.1.0", zod: "^4.6.7" },
+  };
+  await writeFile(path.join(workspace, "package.json"), `${JSON.stringify(pkg, null, 2)}\n`);
   await writeFile(
-    path.join(workspace, "package.json"),
-    `${JSON.stringify({ name: "e2e-app", private: true, scripts: { dev: "node server.js" } }, null, 2)}\n`,
+    path.join(workspace, "routes.js"),
+    [
+      'const express = require("express");',
+      'const { z } = require("zod");',
+      "",
+      "const Item = z.object({",
+      "  name: z.string().min(2),",
+      "  qty: z.number().int().positive(),",
+      "});",
+      "",
+      "const app = express();",
+      "",
+      'app.get("/api/health", (req, res) => res.json({ ok: true }));',
+      "",
+      'app.post("/api/items", (req, res) => {',
+      "  const item = Item.parse(req.body);",
+      "  res.status(201).json(item);",
+      "});",
+      "",
+      "module.exports = app;",
+      "",
+    ].join("\n"),
   );
   await writeFile(
     path.join(workspace, "server.js"),
