@@ -439,9 +439,24 @@ function commonJsExports(statements: TS.NodeArray<TS.Statement>): {
   return { whole, named };
 }
 
+/**
+ * Parsed files kept between scans (ADR-0008): a file is parsed again only when its size or
+ * modified time changes, so the rescan after a save parses one file, not the whole project.
+ * Syntax trees are never changed after parsing, so sharing them between scans is safe.
+ */
+const parseCache = new Map<string, { size: number; mtimeMs: number; parsed: ParsedFile }>();
+const PARSE_CACHE_LIMIT = 10_000;
+
 async function parseFile(filePath: string): Promise<ParsedFile | undefined> {
   try {
-    if ((await stat(filePath)).size > MAX_FILE_BYTES) return undefined;
+    const { size, mtimeMs } = await stat(filePath);
+    if (size > MAX_FILE_BYTES) return undefined;
+    const cached = parseCache.get(filePath);
+    parseCache.delete(filePath); // re-added below: the oldest entry is the least recently used
+    if (cached && cached.size === size && cached.mtimeMs === mtimeMs) {
+      parseCache.set(filePath, cached);
+      return cached.parsed;
+    }
     const text = await readFile(filePath, "utf8");
     const sourceFile = ts.createSourceFile(
       filePath,
@@ -450,8 +465,15 @@ async function parseFile(filePath: string): Promise<ParsedFile | undefined> {
       true,
       scriptKindOf(filePath),
     );
-    return { path: filePath, sourceFile };
+    const parsed = { path: filePath, sourceFile };
+    parseCache.set(filePath, { size, mtimeMs, parsed });
+    if (parseCache.size > PARSE_CACHE_LIMIT) {
+      const oldest = parseCache.keys().next().value;
+      if (oldest !== undefined) parseCache.delete(oldest);
+    }
+    return parsed;
   } catch {
+    parseCache.delete(filePath);
     return undefined;
   }
 }

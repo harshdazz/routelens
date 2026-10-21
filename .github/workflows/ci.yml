@@ -21,6 +21,14 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      # M4: the CLI runs the example requests and flows against the demo server, with the
+      # same steps as examples/github-actions/routelens.yml. The login is the demo server's
+      # toy login, not a secret.
+      - run: node examples/demo-server.mjs &
+      - run: node packages/cli/dist/cli.js run examples --wait 30 --junit routelens-report.xml
+        env:
+          ROUTELENS_USERNAME: demo@routelens.dev
+          ROUTELENS_PASSWORD: demo-password
       # Extension tests in a real VS Code (downloaded by @vscode/test-electron). Linux CI has
       # no screen, so xvfb gives VS Code a virtual one.
       - run: xvfb-run -a pnpm test:e2e

@@ -27,6 +27,13 @@ export function interpolate(template: string, variables: Variables): Interpolati
   return { value, missing };
 }
 
+const WHOLE_PLACEHOLDER = /^\{\{\s*([A-Za-z_][\w.-]*)\s*\}\}$/;
+
+/** `"{{postId}}"` → `"postId"`: the name when the whole template is one placeholder. */
+export function placeholderName(template: string): string | undefined {
+  return WHOLE_PLACEHOLDER.exec(template)?.[1];
+}
+
 /** All variable names used in a template, unique, in order of appearance. */
 export function findVariables(template: string): string[] {
   const names: string[] = [];

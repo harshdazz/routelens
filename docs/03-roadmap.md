@@ -80,16 +80,21 @@ Details decided while building (fingerprints in the `route` field, renames, dele
 
 **Acceptance:** 95%+ of fixture routes detected; a sample body passes the route's own zod validation. ✅ (2026-10-21) 36 of 36 fixture routes detected (`scan.test.ts` checks each one). All 10 routes that validate with zod get a sample that their own schema accepts: `routeSamples.test.ts` loads the real schema from the fixture and runs it with the real zod. `zodSample.test.ts` checks about 100 more zod expressions the same way. `pnpm test:e2e` (12 tests, real VS Code 1.143) covers scanning, ▶ Send on a route and drift.
 
-## M4 — Autopilot ⬜ (target 2026-11-11)
+## M4 — Autopilot 🟡 built and verified, F5 hand check and first CI run left (2026-10-21, target was 2026-11-11)
 
-- [ ] "Test everything": run every route and show a health board (e.g. 10 ✓, 2 ✗) in the sidebar
-- [ ] Watch mode: saving a route file re-runs its requests and updates the inline ✓/✗
-- [ ] Auto-login for protected routes: find the login route, log in once, reuse the token (kept in memory or SecretStorage, never in files)
-- [ ] Flow format `.flow.json` (steps, extracted values, assertions) and a deterministic flow runner (no AI)
-- [ ] `packages/cli`: `npx routelens run` (flows + requests, JUnit output)
-- [ ] GitHub Action example workflow
+[ADR-0008](decisions/0008-autopilot-runner-flows-login.md)
 
-**Acceptance:** on the fixtures, one click runs every detected route; saving a route file re-runs its tests within 2 seconds; a sample repo runs its flows in GitHub Actions.
+- [x] "Test everything": run every route and show a health board (e.g. 10 ✓, 2 ✗) in the sidebar
+- [x] Watch mode: saving a route file re-runs its requests and updates the inline ✓/✗
+- [x] Auto-login for protected routes: find the login route, log in once, reuse the token (kept in memory or SecretStorage, never in files)
+- [x] Flow format `.flow.json` (steps, extracted values, assertions) and a deterministic flow runner (no AI)
+- [x] `packages/cli`: `routelens run` (flows + requests, JUnit output). Package name `@routelens/cli`, because `routelens` is the extension's name in this repo
+- [x] GitHub Action example workflow (`examples/github-actions/routelens.yml`), and CI runs the CLI on `examples/`
+- [x] Rescan cache: unchanged files are not parsed again (needed for "within 2 seconds" on big projects)
+- [ ] Tried by hand with F5 (Harsh): Test everything on `examples/` with the demo server (login `demo@routelens.dev` / `demo-password`), ▶ Run flow, then save a route file in a fixture after a run
+- [ ] First CI run on GitHub (nothing pushed yet)
+
+**Acceptance:** on the fixtures, one click runs every detected route; saving a route file re-runs its tests within 2 seconds; a sample repo runs its flows in GitHub Actions. 🟡 (2026-10-21) `pnpm test:e2e` (15 tests, real VS Code 1.143): Test everything ran every route, the first request and a flow (6 passed, 0 failed), asking for the login once; ▶ Run flow passed; saving `routes.js` ran its request again about 300 ms after the save. The built CLI ran `examples/` against the demo server: 9 passed with `ROUTELENS_USERNAME`/`ROUTELENS_PASSWORD`, 7 passed and 2 failed (the 401s) without, with a JUnit report. CI runs the same command, but has not run on GitHub yet because nothing is pushed.
 
 ## M5 — MCP: any AI agent can drive RouteLens ⬜ (target 2026-11-18)
 

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "name": "Who am I (needs a login)",
+  "method": "GET",
+  "url": "{{baseUrl}}/api/me",
+  "headers": {},
+  "query": {},
+  "body": { "type": "none" },
+  "expect": { "status": 200, "values": { "body.email": { "type": "string" } } }
+}

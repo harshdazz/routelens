@@ -1,0 +1,44 @@
+# Example: run your RouteLens requests and flows on every push and pull request.
+# Copy this file to .github/workflows/routelens.yml in your project.
+#
+# What it does: installs your project, starts its dev server (the "dev" or "start" script
+# in package.json), runs every request in .routelens/requests and every flow in
+# .routelens/flows, stops the server, and uploads a JUnit report. Failures also show up
+# on the files in the pull request.
+#
+# Login: when a route answers 401, RouteLens logs in with your login request. Add the
+# repository secrets ROUTELENS_USERNAME and ROUTELENS_PASSWORD (Settings → Secrets and
+# variables → Actions). Use a test account, never a real one.
+#
+# Note: @routelens/cli is published with RouteLens v0.1 (M6). Until then, build it from
+# this repository (see packages/cli/README.md).
+name: API tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  routelens:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run RouteLens requests and flows
+        run: npx --yes @routelens/cli run --start --junit routelens-report.xml
+        env:
+          ROUTELENS_USERNAME: ${{ secrets.ROUTELENS_USERNAME }}
+          ROUTELENS_PASSWORD: ${{ secrets.ROUTELENS_PASSWORD }}
+          # Any {{variable}} can come from a secret: ROUTELENS_VAR_<name>.
+          # ROUTELENS_VAR_apiKey: ${{ secrets.TEST_API_KEY }}
+      - name: Keep the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: routelens-report
+          path: routelens-report.xml

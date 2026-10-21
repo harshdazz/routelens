@@ -3,8 +3,10 @@ import * as vscode from "vscode";
 import type { LastResult } from "./inlineResult";
 import {
   renderErrorHtml,
+  renderFlowHtml,
   renderResponseHtml,
   type ErrorView,
+  type FlowView,
   type ResponseView,
 } from "./responseHtml";
 
@@ -23,11 +25,17 @@ export class ResponsePanel implements vscode.Disposable {
     panel.webview.html = renderErrorHtml(view, nonce());
   }
 
+  showFlow(view: FlowView): void {
+    const panel = this.reveal(`${view.run.passed ? "Passed" : "Failed"} · ${view.flowName}`);
+    panel.webview.html = renderFlowHtml(view, nonce());
+  }
+
   /** Show a result and bring the panel back (a click on the inline result). */
   show(result: LastResult): void {
     this.closedByUser = false;
     if (result.kind === "response") this.showResponse(result.view);
     if (result.kind === "error") this.showError(result.view);
+    if (result.kind === "flow") this.showFlow(result.view);
   }
 
   /**

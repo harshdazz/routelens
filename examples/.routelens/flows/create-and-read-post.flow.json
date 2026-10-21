@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "name": "Create a post and read it back",
+  "steps": [
+    { "request": "create-post", "extract": { "postId": "body.id" }, "expect": { "status": 201 } },
+    {
+      "name": "Read it back",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/posts/{{postId}}" },
+      "expect": { "status": 200, "values": { "body.id": "{{postId}}" } }
+    }
+  ]
+}

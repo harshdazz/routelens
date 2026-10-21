@@ -15,6 +15,7 @@ const responseResult = (overrides: Partial<ApiResponse> = {}): LastResult => ({
       statusText: "Created",
       url: "http://localhost:3000/api/posts",
       headers: { "content-type": "application/json" },
+      setCookies: [],
       body: '{"id":1}',
       sizeBytes: 8,
       truncated: false,

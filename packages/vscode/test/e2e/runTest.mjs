@@ -37,8 +37,9 @@ function isPortOpen(port) {
 /**
  * A fresh project with no .routelens/ folder: a package.json with a `dev` script and a tiny
  * server with no dependencies. RouteLens must find `listen(<port>)` by itself.
- * routes.js is Express code that is never run: RouteLens only reads it (M3), and the tiny
- * server answers every path, so its routes can be sent.
+ * routes.js and auth.js are Express code that is never run: RouteLens only reads them (M3).
+ * The tiny server answers every path (with a request counter `n`, so a run can be told from
+ * the one before), except /api/me, which needs the token from POST /api/login (M4).
  */
 async function tinyProject(workspace) {
   const port = await freePort();
@@ -74,12 +75,47 @@ async function tinyProject(workspace) {
     ].join("\n"),
   );
   await writeFile(
+    path.join(workspace, "auth.js"),
+    [
+      'const express = require("express");',
+      'const { z } = require("zod");',
+      "",
+      "const Login = z.object({ email: z.string().email(), password: z.string().min(8) });",
+      "const app = express();",
+      'app.post("/api/login", (req, res) => res.json({ token: Login.parse(req.body).email }));',
+      'app.get("/api/me", (req, res) => res.json({ me: true }));',
+      "module.exports = app;",
+      "",
+    ].join("\n"),
+  );
+  await writeFile(
     path.join(workspace, "server.js"),
     [
       'const http = require("node:http");',
+      "let n = 0;",
+      "const tokens = new Set();",
       "const server = http.createServer((req, res) => {",
-      '  res.writeHead(200, { "Content-Type": "application/json" });',
-      "  res.end(JSON.stringify({ ok: true, path: req.url }));",
+      '  let raw = "";',
+      '  req.on("data", (chunk) => (raw += chunk));',
+      '  req.on("end", () => {',
+      "    n += 1;",
+      "    const send = (status, data) => {",
+      '      res.writeHead(status, { "Content-Type": "application/json" });',
+      "      res.end(JSON.stringify(data));",
+      "    };",
+      '    if (req.method === "POST" && req.url === "/api/login") {',
+      '      const body = JSON.parse(raw || "{}");',
+      '      if (body.password !== "e2e-password") return send(401, { error: "wrong password" });',
+      "      const token = `t${n}`;",
+      "      tokens.add(token);",
+      "      return send(200, { data: { token } });",
+      "    }",
+      '    if (req.url === "/api/me") {',
+      '      const token = (req.headers.authorization || "").replace("Bearer ", "");',
+      '      return tokens.has(token) ? send(200, { me: "e2e" }) : send(401, { error: "log in" });',
+      "    }",
+      "    send(200, { ok: true, path: req.url, n });",
+      "  });",
       "});",
       `server.listen(${port}, () => console.log("e2e server ready"));`,
       "",

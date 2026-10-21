@@ -29,7 +29,8 @@
   "main": "./dist/extension.js",
   "activationEvents": [
     "workspaceContains:package.json",
-    "workspaceContains:**/*.req.json"
+    "workspaceContains:**/*.req.json",
+    "workspaceContains:**/*.flow.json"
   ],
   "capabilities": {
     "untrustedWorkspaces": {
@@ -111,6 +112,23 @@
         "title": "Go to Code",
         "category": "RouteLens",
         "icon": "$(code)"
+      },
+      {
+        "command": "routelens.testEverything",
+        "title": "Test Everything",
+        "category": "RouteLens",
+        "icon": "$(run-all)"
+      },
+      {
+        "command": "routelens.runFlow",
+        "title": "Run Flow",
+        "category": "RouteLens",
+        "icon": "$(play)"
+      },
+      {
+        "command": "routelens.logOut",
+        "title": "Log Out",
+        "category": "RouteLens"
       }
     ],
     "menus": {
@@ -118,6 +136,11 @@
         {
           "command": "routelens.sendRequest",
           "when": "resourceFilename =~ /\\.req\\.json$/",
+          "group": "navigation"
+        },
+        {
+          "command": "routelens.runFlow",
+          "when": "resourceFilename =~ /\\.flow\\.json$/",
           "group": "navigation"
         }
       ],
@@ -153,13 +176,26 @@
         {
           "command": "routelens.openRouteSource",
           "when": "false"
+        },
+        {
+          "command": "routelens.runFlow",
+          "when": "resourceFilename =~ /.flow.json$/"
+        },
+        {
+          "command": "routelens.testEverything",
+          "when": "isWorkspaceTrusted"
         }
       ],
       "view/title": [
         {
+          "command": "routelens.testEverything",
+          "when": "view == routelens.routes",
+          "group": "navigation@1"
+        },
+        {
           "command": "routelens.scanRoutes",
           "when": "view == routelens.routes",
-          "group": "navigation"
+          "group": "navigation@2"
         }
       ],
       "view/item/context": [
@@ -187,6 +223,16 @@
           "command": "routelens.openRouteSource",
           "when": "view == routelens.routes && viewItem == route",
           "group": "1_route@3"
+        },
+        {
+          "command": "routelens.sendRequest",
+          "when": "view == routelens.routes && viewItem == request",
+          "group": "inline@1"
+        },
+        {
+          "command": "routelens.runFlow",
+          "when": "view == routelens.routes && viewItem == flow",
+          "group": "inline@1"
         }
       ]
     },
@@ -218,6 +264,11 @@
           ],
           "default": "ask",
           "markdownDescription": "What to do when you send a request to `localhost` and nothing is running. RouteLens only runs the `dev` (or `start`) script from your `package.json`, in a visible terminal, in trusted workspaces."
+        },
+        "routelens.runOnSave": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "When you save a file with route handlers, run their requests again and update the ✓/✗ above each handler. Only requests that already ran (from ▶ Send or Test Everything) run again, so saving never sends something new."
         }
       }
     },
@@ -229,6 +280,10 @@
       {
         "fileMatch": "*.env.json",
         "url": "./schemas/environment.schema.json"
+      },
+      {
+        "fileMatch": "*.flow.json",
+        "url": "./schemas/flow.schema.json"
       }
     ],
     "taskDefinitions": [
@@ -291,6 +346,17 @@
             },
             "completionEvents": [
               "onContext:routelens.sentRequest"
+            ]
+          },
+          {
+            "id": "testEverything",
+            "title": "Test everything",
+            "description": "Run every route and every flow in one click, and see what passes on the board in the RouteLens sidebar. After that, saving a route file runs its requests again by itself.\n[Test everything](command:routelens.testEverything)",
+            "media": {
+              "markdown": "media/walkthrough/test-everything.md"
+            },
+            "completionEvents": [
+              "onCommand:routelens.testEverything"
             ]
           },
           {

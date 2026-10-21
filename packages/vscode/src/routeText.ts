@@ -1,4 +1,5 @@
 import type { DetectedRoute, SkippedRoute } from "@routelens/core";
+import { formatDuration } from "./responseHtml";
 
 // Text for detected routes in the CodeLens and the Routes view. No `vscode` import, so it
 // can be unit-tested.
@@ -50,4 +51,12 @@ export function scanSummary(routeCount: number, frameworks: readonly string[]): 
     return "No Next.js or Express in package.json, so there are no routes to read yet.";
   }
   return routeCount === 1 ? "Found 1 API route." : `Found ${routeCount} API routes.`;
+}
+
+/** The health board line: "12 passed · 2 failed · 1.3 s". */
+export function testSummaryText(passed: number, failed: number, durationMs: number): string {
+  const parts = [`${passed} passed`];
+  if (failed > 0) parts.push(`${failed} failed`);
+  parts.push(formatDuration(durationMs));
+  return parts.join(" · ");
 }

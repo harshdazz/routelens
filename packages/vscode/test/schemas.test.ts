@@ -3,7 +3,8 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { fileJsonSchemas } from "@routelens/core";
 
-// The JSON Schemas in ../schemas give users autocomplete in .req.json / .env.json files.
+// The JSON Schemas in ../schemas give users autocomplete in .req.json / .env.json /
+// .flow.json files.
 // They are generated from the zod schemas in core. If this test fails, run:
 //   UPDATE_SCHEMAS=1 pnpm --filter routelens test
 const schemaFile = (name: string) => fileURLToPath(new URL(`../schemas/${name}`, import.meta.url));
@@ -14,6 +15,7 @@ describe("shipped JSON Schemas", () => {
   const files = [
     ["request.schema.json", schemas.request],
     ["environment.schema.json", schemas.environment],
+    ["flow.schema.json", schemas.flow],
   ] as const;
 
   for (const [name, schema] of files) {

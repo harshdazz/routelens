@@ -1,15 +1,16 @@
 import path from "node:path";
 import * as vscode from "vscode";
-import { RequestCodeLensProvider } from "./codeLens";
+import { RUN_FLOW, RequestCodeLensProvider } from "./codeLens";
 import { newRequestCommand } from "./commands/newRequest";
 import { openRouteRequestCommand, scanRoutesCommand, sendRouteCommand } from "./commands/routes";
 import { sendRequestCommand } from "./commands/sendRequest";
 import { Environments, currentProjectRoot, hasRouteLensFolder } from "./environments";
+import { Logins } from "./logins";
 import { ResponsePanel } from "./responsePanel";
 import { ResultStore } from "./results";
 import { ROUTE_SOURCE_SELECTOR, RouteCodeLensProvider } from "./routeCodeLens";
 import { RouteIndex } from "./routeIndex";
-import { RoutesTreeProvider, routeTargetOf } from "./routesView";
+import { RoutesTreeProvider, fileUriOf, routeTargetOf } from "./routesView";
 import { ServerManager } from "./serverManager";
 import {
   autoSetUp,
@@ -18,6 +19,7 @@ import {
   setUpProject,
   type SetupDeps,
 } from "./setup";
+import { TestRunner } from "./testRunner";
 
 /**
  * Runs in any folder with a package.json, so it must stay cheap (ADR-0006): register things
@@ -31,13 +33,10 @@ export function activate(context: vscode.ExtensionContext): void {
   const environments = new Environments(context);
   const server = new ServerManager(context, output);
   const codeLens = new RequestCodeLensProvider(results);
+  const flowLens = new RequestCodeLensProvider(results, RUN_FLOW);
+  const logins = new Logins(context);
   const routes = new RouteIndex(context, output);
   const routeLens = new RouteCodeLensProvider(routes, results);
-  const routesTree = new RoutesTreeProvider(routes, results);
-  const routesView = vscode.window.createTreeView("routelens.routes", {
-    treeDataProvider: routesTree,
-    showCollapseAll: true,
-  });
 
   const refreshProjectState = async (): Promise<void> => {
     const folders = vscode.workspace.workspaceFolders ?? [];
@@ -57,6 +56,24 @@ export function activate(context: vscode.ExtensionContext): void {
     },
   };
   const routeDeps = { index: routes, setup };
+  const runner = new TestRunner({
+    index: routes,
+    results,
+    server,
+    environments,
+    logins,
+    panel,
+    output,
+    setup,
+  });
+  const routesTree = new RoutesTreeProvider(routes, results, runner);
+  const routesView = vscode.window.createTreeView("routelens.routes", {
+    treeDataProvider: routesTree,
+    showCollapseAll: true,
+  });
+  const updateViewDescription = (): void => {
+    routesView.description = routesTree.description();
+  };
   /** Zero setup for every folder, then update the status bar and walkthrough. */
   const startUp = async (): Promise<void> => {
     for (const folder of vscode.workspace.workspaceFolders ?? []) {
@@ -79,12 +96,26 @@ export function activate(context: vscode.ExtensionContext): void {
     environments,
     server,
     codeLens,
+    flowLens,
+    logins,
     routes,
     routeLens,
+    runner,
     routesTree,
     routesView,
-    routes.onDidChange(() => {
-      routesView.description = routesTree.description();
+    routes.onDidChange(updateViewDescription),
+    runner.onDidChange(updateViewDescription),
+    vscode.commands.registerCommand("routelens.testEverything", () => runner.testEverything()),
+    vscode.commands.registerCommand("routelens.runFlow", (target?: unknown) =>
+      runner.runFlowFile(fileUriOf(target)),
+    ),
+    vscode.commands.registerCommand("routelens.logOut", async () => {
+      const count = await logins.logOut();
+      void vscode.window.showInformationMessage(
+        count > 0
+          ? "RouteLens: logged out. The next 401 asks for your login again."
+          : "RouteLens: there was no login to forget.",
+      );
     }),
     vscode.commands.registerCommand("routelens.sendRoute", (target?: unknown) =>
       sendRouteCommand(routeTargetOf(target), routeDeps),
@@ -105,12 +136,20 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("routelens.scanRoutes", (options?: { quiet?: boolean }) =>
       scanRoutesCommand(routeDeps, !options?.quiet),
     ),
-    vscode.commands.registerCommand("routelens.sendRequest", (uri?: vscode.Uri) =>
-      sendRequestCommand({ uri, panel, output, results, server, environments }),
+    vscode.commands.registerCommand("routelens.sendRequest", (target?: unknown) =>
+      sendRequestCommand({
+        uri: fileUriOf(target),
+        panel,
+        output,
+        results,
+        server,
+        environments,
+        logins,
+      }),
     ),
     vscode.commands.registerCommand("routelens.newRequest", () => newRequestCommand(setup)),
-    vscode.commands.registerCommand("routelens.showLastResponse", (uri?: vscode.Uri) => {
-      const target = uri ?? vscode.window.activeTextEditor?.document.uri;
+    vscode.commands.registerCommand("routelens.showLastResponse", (argument?: unknown) => {
+      const target = fileUriOf(argument) ?? vscode.window.activeTextEditor?.document.uri;
       const result = target && results.get(target);
       if (result) panel.show(result);
     }),
@@ -143,6 +182,10 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.languages.registerCodeLensProvider(
       { scheme: "file", pattern: "**/*.req.json" },
       codeLens,
+    ),
+    vscode.languages.registerCodeLensProvider(
+      { scheme: "file", pattern: "**/*.flow.json" },
+      flowLens,
     ),
     vscode.languages.registerCodeLensProvider(ROUTE_SOURCE_SELECTOR, routeLens),
     vscode.workspace.onDidGrantWorkspaceTrust(() => void startUp()),

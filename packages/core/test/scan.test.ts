@@ -1,6 +1,10 @@
+import { mkdtemp, rm, utimes, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { scanRoutes, type DetectedRoute } from "../src/index.js";
+import { SourceProject } from "../src/scanner/project.js";
 
 const fixture = (name: string): string =>
   fileURLToPath(new URL(`../../../fixtures/${name}`, import.meta.url));
@@ -223,5 +227,36 @@ describe("scanRoutes: other projects", () => {
     const root = fixture("monorepo");
     const { routes } = await scanRoutes(fixture("monorepo/apps/web"), { root });
     expect(routes.every((route) => route.file.startsWith("apps/web/"))).toBe(true);
+  });
+});
+
+describe("rescan cache", () => {
+  it("reuses unchanged files and parses changed files again", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "routelens-cache-"));
+    try {
+      const file = path.join(dir, "app.js");
+      const write = async (code: string, mtime: Date): Promise<void> => {
+        await writeFile(file, code);
+        await utimes(file, mtime, mtime); // explicit times: fast saves can share a timestamp
+      };
+      await writeFile(
+        path.join(dir, "package.json"),
+        JSON.stringify({ dependencies: { express: "5" } }),
+      );
+      const app = 'const app = require("express")();\napp.get("/a", (req, res) => res.end());\n';
+      await write(app, new Date(2026, 0, 1));
+      expect(keys((await scanRoutes(dir)).routes)).toEqual(["GET /a"]);
+
+      // A later scan (a new project object) gets the very same syntax tree back.
+      const first = await SourceProject.open(dir).file(file);
+      const again = await SourceProject.open(dir).file(file);
+      expect(again?.sourceFile).toBe(first?.sourceFile);
+
+      await write(`${app}app.post("/b", (req, res) => res.end());\n`, new Date(2026, 0, 2));
+      expect(keys((await scanRoutes(dir)).routes)).toEqual(["GET /a", "POST /b"]);
+      expect((await SourceProject.open(dir).file(file))?.sourceFile).not.toBe(first?.sourceFile);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });

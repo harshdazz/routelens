@@ -8,6 +8,8 @@ export interface ApiResponse {
   url: string;
   /** Header names are lower-case. */
   headers: Record<string, string>;
+  /** Each `Set-Cookie` header on its own (`headers` joins them, which breaks dates). */
+  setCookies: string[];
   /** Body decoded as UTF-8 (cut at `maxBodyBytes`). */
   body: string;
   /** Full body size in bytes, even when `body` was truncated. */
@@ -62,6 +64,7 @@ export async function sendRequest(
       statusText: response.statusText,
       url: response.url || url.toString(),
       headers: Object.fromEntries(response.headers),
+      setCookies: response.headers.getSetCookie(),
       body: new TextDecoder().decode(truncated ? bytes.subarray(0, maxBodyBytes) : bytes),
       sizeBytes: bytes.byteLength,
       truncated,

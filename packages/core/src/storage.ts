@@ -3,19 +3,23 @@ import path from "node:path";
 import { RouteLensError } from "./errors.js";
 import {
   parseEnvironment,
+  parseFlow,
   parseRequest,
   type ApiRequest,
   type ApiRequestInput,
   type Environment,
   type EnvironmentInput,
+  type Flow,
 } from "./model.js";
 
 /** Folder in the user's project that holds everything RouteLens saves (see ADR-0003). */
 export const ROUTELENS_DIR = ".routelens";
 export const REQUESTS_DIR = "requests";
 export const ENVIRONMENTS_DIR = "environments";
+export const FLOWS_DIR = "flows";
 export const REQUEST_FILE_SUFFIX = ".req.json";
 export const ENVIRONMENT_FILE_SUFFIX = ".env.json";
+export const FLOW_FILE_SUFFIX = ".flow.json";
 
 export async function readRequestFile(filePath: string): Promise<ApiRequest> {
   return parseRequest(await readText(filePath), path.basename(filePath));
@@ -32,6 +36,7 @@ export function serializeRequest(request: ApiRequestInput): string {
     headers: request.headers ?? {},
     query: request.query ?? {},
     body: request.body ?? { type: "none" },
+    ...(request.expect === undefined ? {} : { expect: request.expect }),
     ...(request.route === undefined
       ? {}
       : {
@@ -54,7 +59,37 @@ export async function writeRequestFile(filePath: string, request: ApiRequestInpu
 }
 
 /** Absolute paths of all `.req.json` files under `<root>/.routelens/requests`, sorted. */
-export async function listRequestFiles(root: string): Promise<string[]> {
+export function listRequestFiles(root: string): Promise<string[]> {
+  return listFiles(path.join(root, ROUTELENS_DIR, REQUESTS_DIR), REQUEST_FILE_SUFFIX);
+}
+
+/** Absolute paths of all `.flow.json` files under `<root>/.routelens/flows`, sorted. */
+export function listFlowFiles(root: string): Promise<string[]> {
+  return listFiles(path.join(root, ROUTELENS_DIR, FLOWS_DIR), FLOW_FILE_SUFFIX);
+}
+
+export async function readFlowFile(filePath: string): Promise<Flow> {
+  return parseFlow(await readText(filePath), path.basename(filePath));
+}
+
+/**
+ * The file of a saved request named in a flow step: `"create-post"` or `"auth/login"` →
+ * `<root>/.routelens/requests/create-post.req.json`. `undefined` when the name would leave
+ * the requests folder.
+ */
+export function savedRequestPath(root: string, name: string): string | undefined {
+  const dir = path.resolve(root, ROUTELENS_DIR, REQUESTS_DIR);
+  const file = path.resolve(dir, `${name}${REQUEST_FILE_SUFFIX}`);
+  return file.startsWith(dir + path.sep) ? file : undefined;
+}
+
+/** The name a flow step uses for a saved request: its path in the requests folder. */
+export function savedRequestName(root: string, filePath: string): string {
+  const relative = path.relative(path.join(root, ROUTELENS_DIR, REQUESTS_DIR), filePath);
+  return relative.split(path.sep).join("/").slice(0, -REQUEST_FILE_SUFFIX.length);
+}
+
+async function listFiles(folder: string, suffix: string): Promise<string[]> {
   const files: string[] = [];
   const walk = async (dir: string): Promise<void> => {
     let entries;
@@ -68,12 +103,12 @@ export async function listRequestFiles(root: string): Promise<string[]> {
       const fullPath = path.join(dir, entry.name);
       if (entry.isDirectory()) {
         await walk(fullPath);
-      } else if (entry.isFile() && entry.name.endsWith(REQUEST_FILE_SUFFIX)) {
+      } else if (entry.isFile() && entry.name.endsWith(suffix)) {
         files.push(fullPath);
       }
     }
   };
-  await walk(path.join(root, ROUTELENS_DIR, REQUESTS_DIR));
+  await walk(folder);
   return files.sort();
 }
 

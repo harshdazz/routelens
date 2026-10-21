@@ -9,11 +9,12 @@ import {
   parseRequest,
   readEnvironment,
   resolveRequest,
-  sendRequest,
+  runRequest,
   type ApiRequest,
 } from "@routelens/core";
 import type { Environments } from "../environments";
-import type { LastResult } from "../inlineResult";
+import { runLine, runToResult, type LastResult } from "../inlineResult";
+import type { Logins } from "../logins";
 import type { ResponsePanel } from "../responsePanel";
 import type { ResultStore } from "../results";
 import type { ServerManager } from "../serverManager";
@@ -25,17 +26,14 @@ interface SendRequestContext {
   results: ResultStore;
   server: ServerManager;
   environments: Environments;
+  logins: Logins;
 }
 
 /** Sends a `.req.json` file. Returns the result (also shown inline), or `undefined` if nothing was sent. */
-export async function sendRequestCommand({
-  uri,
-  panel,
-  output,
-  results,
-  server,
-  environments,
-}: SendRequestContext): Promise<LastResult | undefined> {
+export async function sendRequestCommand(
+  context: SendRequestContext,
+): Promise<LastResult | undefined> {
+  const { uri, panel, output, results, server, environments, logins } = context;
   if (!vscode.workspace.isTrusted) {
     void vscode.window.showWarningMessage("RouteLens: trust this workspace to send requests.");
     return undefined;
@@ -51,25 +49,27 @@ export async function sendRequestCommand({
     return undefined;
   }
 
-  let request: ApiRequest | undefined;
-  let url = "";
+  let request: ApiRequest;
   try {
     // Use the editor text, not the file on disk, so unsaved edits are sent too.
     request = parseRequest(document.getText(), path.basename(document.fileName));
-    url = request.url;
+  } catch (error) {
+    reportError(error, output);
+    results.delete(document.uri);
+    return undefined;
+  }
 
-    const config = vscode.workspace.getConfiguration("routelens", document.uri);
-    const environmentName = environments.activeName();
-    const timeoutMs = config.get<number>("timeoutMs", 30_000);
+  const config = vscode.workspace.getConfiguration("routelens", document.uri);
+  const environmentName = environments.activeName();
+  const timeoutMs = config.get<number>("timeoutMs", 30_000);
+  const root = await findProjectRoot(path.dirname(document.uri.fsPath));
+  const environment = root ? await readEnvironment(root, environmentName) : undefined;
+  const variables = environment?.variables ?? {};
 
-    const root = await findProjectRoot(path.dirname(document.uri.fsPath));
-    const environment = root ? await readEnvironment(root, environmentName) : undefined;
-    const { request: resolved, missingVariables } = resolveRequest(
-      request,
-      environment?.variables ?? {},
-    );
+  let url = request.url;
+  try {
+    const { request: resolved, missingVariables } = resolveRequest(request, variables);
     url = resolved.url;
-
     if (missingVariables.length > 0) {
       const where = environment ? `the "${environmentName}" environment` : "any environment";
       const choice = await vscode.window.showWarningMessage(
@@ -78,96 +78,90 @@ export async function sendRequestCommand({
       );
       if (choice !== "Send anyway") return undefined;
     }
+  } catch (error) {
+    // A request that cannot be resolved (a body on GET...) fails in the runner with its reason.
+    if (!(error instanceof RouteLensError)) throw error;
+  }
 
-    // Zero setup (ADR-0006): a request to this machine with nothing answering → offer to
-    // start the dev server, wait for it, then send. ~300 ms TCP check, local URLs only.
-    const target = localServerOf(resolved.url);
-    if (target && root && !(await isPortOpen(target.port, { host: target.host }))) {
-      const outcome = await server.ensureRunning(root, target);
-      output.appendLine(`… ${target.host}:${target.port} was closed: ${outcome}`);
-      // "unavailable": send anyway, so the user sees the real "can't connect" error.
-      if (outcome !== "started" && outcome !== "already-running" && outcome !== "unavailable") {
-        return undefined;
-      }
+  // Zero setup (ADR-0006): a request to this machine with nothing answering → offer to
+  // start the dev server, wait for it, then send. ~300 ms TCP check, local URLs only.
+  const target = localServerOf(url);
+  if (target && root && !(await isPortOpen(target.port, { host: target.host }))) {
+    const outcome = await server.ensureRunning(root, target);
+    output.appendLine(`… ${target.host}:${target.port} was closed: ${outcome}`);
+    // "unavailable": send anyway, so the user sees the real "can't connect" error.
+    if (outcome !== "started" && outcome !== "already-running" && outcome !== "unavailable") {
+      return undefined;
     }
+  }
 
-    results.set(document.uri, { kind: "sending" });
-    output.appendLine(`→ ${resolved.method} ${resolved.url}`);
-    const response = await vscode.window.withProgress(
+  // Auto-login (ADR-0008): a click is a new try, even after a failed login.
+  const auth = root ? await logins.session(root, environmentName) : undefined;
+  auth?.clearFailure();
+
+  results.set(document.uri, { kind: "sending" });
+  output.appendLine(`→ ${request.method} ${url}`);
+  let run;
+  try {
+    run = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: `RouteLens: ${resolved.method} ${resolved.url}`,
+        title: `RouteLens: ${request.method} ${url}`,
         cancellable: true,
       },
       (_progress, token) => {
         const controller = new AbortController();
         token.onCancellationRequested(() => controller.abort());
-        return sendRequest(resolved, { timeoutMs, signal: controller.signal });
+        return runRequest(request, {
+          variables,
+          send: { timeoutMs, signal: controller.signal },
+          ...(auth ? { auth } : {}),
+          allowMissingVariables: true,
+          file: document.uri.fsPath,
+        });
       },
     );
-    output.appendLine(
-      `← ${response.status} ${response.statusText} in ${Math.round(response.durationMs)} ms`,
-    );
-
-    const result: LastResult = {
-      kind: "response",
-      view: {
-        requestName: request.name,
-        method: resolved.method,
-        url: resolved.url,
-        environmentName: environment ? environmentName : undefined,
-        response,
-      },
-    };
-    results.set(document.uri, result);
-    panel.update(result);
-    // Ticks the "Send your first request" walkthrough step.
-    void vscode.commands.executeCommand("setContext", "routelens.sentRequest", true);
-    return result;
   } catch (error) {
     if (error instanceof RouteLensError && error.code === "aborted") {
       output.appendLine("✕ cancelled");
       results.delete(document.uri);
       return undefined;
     }
-    const message = error instanceof Error ? error.message : String(error);
-    output.appendLine(`✕ ${message}`);
-    if (error instanceof RouteLensError) {
-      error.details.forEach((line) => output.appendLine(`    ${line}`));
-    }
-
-    let result: LastResult | undefined;
-    if (request && error instanceof RouteLensError && error.code !== "invalid-file") {
-      result = {
-        kind: "error",
-        code: error.code,
-        view: {
-          requestName: request.name,
-          method: request.method,
-          url,
-          message,
-          hint: hintFor(error),
-        },
-      };
-      results.set(document.uri, result);
-      panel.update(result);
-    } else {
-      results.delete(document.uri);
-    }
-    void vscode.window.showErrorMessage(`RouteLens: ${message}`);
-    return result;
+    throw error;
   }
+  output.appendLine(runLine(run));
+
+  const result = runToResult(run, environment ? environmentName : undefined);
+  results.set(document.uri, result);
+  panel.update(result);
+  // Ticks the "Send your first request" walkthrough step.
+  void vscode.commands.executeCommand("setContext", "routelens.sentRequest", true);
+
+  if (run.error) {
+    void vscode.window.showErrorMessage(`RouteLens: ${run.error.message}`);
+  } else if (run.loginProblem && root) {
+    void offerNewLogin(run.loginProblem, () => logins.forget(root, environmentName), document.uri);
+  }
+  return result;
 }
 
-function hintFor(error: RouteLensError): string | undefined {
-  switch (error.code) {
-    case "network":
-      return 'Is your server running? Run "RouteLens: Start Server", or check the address with "RouteLens: Change Server Address".';
-    case "timeout":
-      return "Increase the routelens.timeoutMs setting if the endpoint is slow.";
-    case "invalid-request":
-      return "Check the URL and the environment selected in the status bar.";
-    default:
-      return undefined;
+/** After a failed login: offer to type the username and password again, then send again. */
+async function offerNewLogin(
+  problem: string,
+  forget: () => Promise<void>,
+  uri: vscode.Uri,
+): Promise<void> {
+  const choice = await vscode.window.showWarningMessage(`RouteLens: ${problem}`, "Log in again");
+  if (choice !== "Log in again") return;
+  await forget();
+  await vscode.commands.executeCommand("routelens.sendRequest", uri);
+}
+
+function reportError(error: unknown, output: vscode.OutputChannel): void {
+  const message = error instanceof Error ? error.message : String(error);
+  output.appendLine(`✕ ${message}`);
+  if (error instanceof RouteLensError) {
+    error.details.forEach((line) => output.appendLine(`    ${line}`));
   }
+  void vscode.window.showErrorMessage(`RouteLens: ${message}`);
 }

@@ -3,6 +3,8 @@ import * as vscode from "vscode";
 import {
   findRouteDrafts,
   findServerDir,
+  listFlowFiles,
+  listRequestFiles,
   scanRoutes,
   syncRouteDrafts,
   type DetectedRoute,
@@ -25,6 +27,10 @@ export interface ProjectRoutes {
   drafts: Record<string, string>;
   /** Drafts whose route is no longer in the code. */
   orphaned: string[];
+  /** Every saved request (`.req.json`), drafts included. Absolute paths. */
+  requests: string[];
+  /** Every flow (`.flow.json`). Absolute paths. */
+  flows: string[];
 }
 
 /** Where a route is: its project folder and its key (`POST /api/posts`). */
@@ -55,7 +61,7 @@ export class RouteIndex implements vscode.Disposable {
       "**/*.{ts,tsx,js,jsx,mjs,cjs,mts,cts}",
     );
     const requests = vscode.workspace.createFileSystemWatcher(
-      "**/.routelens/requests/**/*.req.json",
+      "**/.routelens/{requests,flows}/**/*.{req,flow}.json",
     );
     for (const watcher of [sources, requests]) {
       this.disposables.push(
@@ -124,22 +130,39 @@ export class RouteIndex implements vscode.Disposable {
   private async scan(root: string): Promise<void> {
     try {
       const dir = await findServerDir(root).catch(() => undefined);
-      if (!dir) {
+      const setUp = await hasRouteLensFolder(root);
+      // A folder with only .routelens/ (no package.json) still has requests and flows to run.
+      if (!dir && !setUp) {
         if (this.projects.delete(root)) this.changed.fire();
         return;
       }
       const started = Date.now();
-      const result = await scanRoutes(dir, { root });
-      const project: ProjectRoutes = { root, result, drafts: {}, orphaned: [] };
+      const result: ScanResult = dir
+        ? await scanRoutes(dir, { root })
+        : { routes: [], skipped: [], frameworks: [], filesScanned: 0 };
+      const project: ProjectRoutes = {
+        root,
+        result,
+        drafts: {},
+        orphaned: [],
+        requests: [],
+        flows: [],
+      };
 
-      if (await hasRouteLensFolder(root)) {
+      if (setUp) {
         if (vscode.workspace.isTrusted) {
           await this.syncDrafts(project);
         } else {
           project.drafts = await findRouteDrafts(root); // untrusted: read only
         }
+        project.requests = await listRequestFiles(root);
+        project.flows = await listFlowFiles(root);
       }
       this.projects.set(root, project);
+      if (!dir) {
+        this.changed.fire();
+        return;
+      }
       this.output.appendLine(
         `Routes: ${scanSummary(result.routes.length, result.frameworks)} ${result.filesScanned} files in ${Date.now() - started} ms (${path.basename(root)}).`,
       );

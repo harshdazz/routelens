@@ -55,7 +55,7 @@ my-app/
    │  ├─ local.env.json      (written by RouteLens from the detected address)
    │  └─ staging.env.json
    └─ flows/                 (M4)
-      └─ signup-and-post.flow.json
+      └─ create-and-read-post.flow.json
 ```
 
 Request file (version 1). `route` is only there when RouteLens made the request from a route in the code (M3):
@@ -74,6 +74,22 @@ Request file (version 1). `route` is only there when RouteLens made the request 
     "file": "app/api/posts/route.ts",
     "generated": { "body/title": "5d41402a", "name": "1f0e3dad", "url": "8f14e45f" }
   }
+}
+```
+
+A request may also have an `expect` block (M4) saying what the response must look like; without it, a status below 400 passes. Flows list steps that run in order and pass values on ([ADR-0008](decisions/0008-autopilot-runner-flows-login.md)):
+
+```json
+{
+  "version": 1,
+  "name": "Create a post and read it back",
+  "steps": [
+    { "request": "create-post", "extract": { "postId": "body.id" }, "expect": { "status": 201 } },
+    {
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/posts/{{postId}}" },
+      "expect": { "values": { "body.id": "{{postId}}" } }
+    }
+  ]
 }
 ```
 
@@ -120,9 +136,21 @@ Files: `packages/core/src/detect/` (detection), `packages/core/src/ports.ts` (po
 
 Files: `packages/core/src/scanner/`, `packages/vscode/src/routeIndex.ts`, `routeCodeLens.ts`, `routesView.ts`, `commands/routes.ts`. Tests: `packages/core/test/scan.test.ts` (every fixture route), `zodSample.test.ts` (each sample checked by the real zod), `routeSamples.test.ts` (M3 acceptance), `drafts.test.ts`; `pnpm test:e2e` covers scanning, ▶ Send on a route and drift in a real VS Code.
 
+## Autopilot (M4)
+
+[ADR-0008](decisions/0008-autopilot-runner-flows-login.md). One runner in core, used by the extension, the CLI and (M5) the MCP server, so they agree on what "passed" means.
+
+1. **Runner** (`packages/core/src/runner/`): `runRequest` resolves variables, sends, and checks the response against `expect` (`expect.ts`: status, partial body, value paths with matchers, time). `runFlow` runs steps in order, saves `extract` values (typed: `"{{postId}}"` stays a number in JSON bodies), and stops at the first failing step. `valuePath.ts` reads paths like `body.items[0].id`. No AI anywhere.
+2. **Auto-login** (`auth.ts`): `findLoginRequest` picks the saved request that logs in (a POST to `/login`, `/signin`, `/auth/login`, `/session`, `/token`… with a password field). On a 401 from the same server, `AuthSession` logs in once, finds the token (a token field in the JSON, or the cookies) and sends again. The token only goes to the origin it came from; requests that expect a 401 are left alone.
+3. **Test everything** (`packages/vscode/src/testRunner.ts`): makes missing route drafts, checks the server (offers to start it), asks before writes to a non-local server, then runs every request (reads first, deletes last) and every flow, one at a time, with progress and Cancel. Results go to the same store as ▶ Send, so the inline ✓/✗, the Routes view and the board (summary line and view description) update live.
+4. **Watch mode**: on save of a source file with routes, rescan it (the parse cache makes this one file), then run again the drafts of its routes that already have a result. If the dev server is restarting, wait up to 5 s for the port and try once more. Setting `routelens.runOnSave`.
+5. **Logins in VS Code** (`logins.ts`): one `AuthSession` per project and environment. The username and password are asked on the first 401 and kept in SecretStorage; the token stays in memory. **RouteLens: Log Out** forgets both.
+6. **CLI** (`packages/cli`): `routelens run [folder]` reads the same files and calls the same runner. Variables come from the environment file, `ROUTELENS_VAR_<name>` and `--var`; the login from `ROUTELENS_USERNAME` / `ROUTELENS_PASSWORD`. `--start` runs the `dev`/`start` script (as zero setup does) and stops it at the end; `--junit` writes a report; in GitHub Actions failures become annotations. Exit code 0 / 1 / 2.
+
+Files: `packages/core/src/runner/`, `packages/vscode/src/testRunner.ts`, `logins.ts`, `routesView.ts`, `packages/cli/src/`. Tests: `packages/core/test/runner.test.ts` and `expect.test.ts` (against a real local API with a login), `packages/cli/test/cli.test.ts` (in-process, including a real `--start`), `pnpm test:e2e` (Test everything with one login prompt, Run Flow, re-run within 2 s of a save). CI runs `routelens run examples` against the demo server.
+
 ## Planned flows
 
-- **Autopilot (M4):** "Test everything" runs every route through core `runner` and shows a health board. A file watcher re-runs the requests of a route file when it is saved. Auto-login runs the login request once and keeps the token in memory or SecretStorage. Flows (`.flow.json`) replay with plain code. `packages/cli` runs the same runner in CI.
 - **MCP (M5):** `packages/mcp` exposes core functions as tools (`list_routes`, `read_route_source`, `send_request`, `run_all`, `run_flow`, `save_flow`, `get_last_failure`). The extension registers it with VS Code automatically, and setup for Claude Code and Cursor is one click. The user's agent does the thinking.
 - **Built-in AI (M7):** core defines a `ModelProvider` interface. Brains are chosen automatically: VS Code language model (Copilot, through an extension adapter) → Ollama on `localhost:11434` → API key → none. Private mode allows local models only.
   - **English → flow:** the agent explores with the same tools as MCP, then writes a `.flow.json` with plain steps. **Replaying a flow never calls the AI** ([ADR-0004](decisions/0004-ai-writes-once-replay-deterministic.md)).
@@ -130,16 +158,17 @@ Files: `packages/core/src/scanner/`, `packages/vscode/src/routeIndex.ts`, `route
 
 ## Security model
 
-| Concern                   | Decision                                                                                                                                                                                           |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Secrets (AI keys, tokens) | VS Code `SecretStorage` (OS keychain) or memory. Never written to `.routelens/`.                                                                                                                   |
-| Webview                   | Strict CSP with a nonce, no remote scripts, all values HTML-escaped. The M1 panel renders static HTML (no script at all).                                                                          |
-| Files from the repo       | Parsed with zod. Invalid files show a clear error and are never executed.                                                                                                                          |
-| Starting the dev server   | Trusted workspaces only; only the `dev` / `start` scripts from `package.json`, never commands from `.routelens` files; the first start in each workspace needs a click; always a visible terminal. |
-| MCP tools                 | Only hosts from the project's environment files by default; non-local `POST`/`PUT`/`PATCH`/`DELETE` need the user's confirmation; no file access outside the workspace.                            |
-| AI data                   | Sent only to the brain in use (the user's agent, Copilot, Ollama or their API key), and the UI says which one. Private mode allows local models only. A notice explains what is sent.              |
-| Requests                  | Sent from the extension host (Node), so there are no browser CORS limits. The user is responsible for the URLs they call.                                                                          |
-| Workspace trust           | Untrusted workspaces: read-only features only (no sending, no server start). Scanning never executes user code.                                                                                    |
+| Concern                   | Decision                                                                                                                                                                                                             |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Secrets (AI keys, tokens) | VS Code `SecretStorage` (OS keychain) or memory. Never written to `.routelens/`. Logins: username and password in SecretStorage, token in memory, sent only to the origin that issued it. CI: environment variables. |
+| Webview                   | Strict CSP with a nonce, no remote scripts, all values HTML-escaped. The M1 panel renders static HTML (no script at all).                                                                                            |
+| Files from the repo       | Parsed with zod. Invalid files show a clear error and are never executed.                                                                                                                                            |
+| Starting the dev server   | Trusted workspaces only; only the `dev` / `start` scripts from `package.json`, never commands from `.routelens` files; the first start in each workspace needs a click; always a visible terminal.                   |
+| MCP tools                 | Only hosts from the project's environment files by default; non-local `POST`/`PUT`/`PATCH`/`DELETE` need the user's confirmation; no file access outside the workspace.                                              |
+| AI data                   | Sent only to the brain in use (the user's agent, Copilot, Ollama or their API key), and the UI says which one. Private mode allows local models only. A notice explains what is sent.                                |
+| Requests                  | Sent from the extension host (Node), so there are no browser CORS limits. The user is responsible for the URLs they call.                                                                                            |
+| Test everything / CLI     | Runs only files from `.routelens/`, one request at a time. Asks before writes to a non-local server. The CLI starts a server only with `--start`, and only the `dev`/`start` script.                                 |
+| Workspace trust           | Untrusted workspaces: read-only features only (no sending, no server start). Scanning never executes user code.                                                                                                      |
 
 ## Tech choices (summary)
 
@@ -153,5 +182,6 @@ Files: `packages/core/src/scanner/`, `packages/vscode/src/routeIndex.ts`, `route
 | Bundling          | esbuild                                    | One fast step, small extension bundle                                                                                    |
 | Tests             | Vitest                                     | Fast, TypeScript-native                                                                                                  |
 | Code parsing (M3) | TypeScript compiler API, parser only       | Same parser as the user's build, plus its module resolution ([ADR-0007](decisions/0007-route-scanner-static-parsing.md)) |
+| CLI (M4)          | `node:util` `parseArgs`, esbuild bundle    | No CLI framework needed; one file to publish ([ADR-0008](decisions/0008-autopilot-runner-flows-login.md))                |
 | MCP (M5)          | `@modelcontextprotocol/sdk`                | Official SDK                                                                                                             |
 | AI (M7)           | VS Code Language Model API + Vercel AI SDK | Copilot models with no key; one API for Anthropic, OpenAI and Ollama                                                     |

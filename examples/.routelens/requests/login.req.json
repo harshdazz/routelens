@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "name": "Log in",
+  "description": "RouteLens fills in the password when a route answers 401: VS Code asks once, the CLI reads ROUTELENS_USERNAME and ROUTELENS_PASSWORD. Demo login: demo@routelens.dev / demo-password.",
+  "method": "POST",
+  "url": "{{baseUrl}}/api/login",
+  "headers": {},
+  "query": {},
+  "body": { "type": "json", "content": { "email": "demo@routelens.dev", "password": "" } }
+}

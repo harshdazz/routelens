@@ -36,14 +36,16 @@ pnpm test:e2e         # extension tests in a real VS Code (@vscode/test-electron
 pnpm test:acceptance  # M2 check on a fresh copy of fixtures/next-default (npm ci, needs port 3000)
 pnpm build            # bundle the extension and build core
 pnpm demo-server      # local API on http://localhost:4000 for trying requests
+node packages/cli/dist/cli.js run examples   # the CLI (after pnpm build), against the demo server
 ```
 
 In VS Code, press **F5** ("Run RouteLens Extension") to launch a dev copy of VS Code with the extension loaded and the `examples/` folder open. "Run RouteLens on the Next.js fixture" opens `fixtures/next-default` instead (run `npm ci` there once) to try zero setup.
 
 ### Layout
 
-- `packages/core` — editor-independent logic: request model, variables, HTTP engine, file storage, `detect` (server address, package manager, start script), port checks and `scanner` (routes, zod samples, drafts; reads code with the TypeScript parser, never runs it). **Never import `vscode` here.**
-- `packages/vscode` — the VS Code extension (commands, CodeLens with inline results, Routes view, route CodeLens, response panel, server manager, environment picker, walkthrough). Thin layer over core.
+- `packages/core` — editor-independent logic: request model, variables, HTTP engine, file storage, `detect` (server address, package manager, start script), port checks, `scanner` (routes, zod samples, drafts; reads code with the TypeScript parser, never runs it) and `runner` (requests, flows, checks, auto-login; plain code, no AI). **Never import `vscode` here.**
+- `packages/vscode` — the VS Code extension (commands, CodeLens with inline results, Routes view and health board, route CodeLens, Test everything, watch mode, logins, response panel, server manager, environment picker, walkthrough). Thin layer over core.
+- `packages/cli` — `routelens run` for the terminal and CI (JUnit, `--start`). Bundled with esbuild into one file.
 - `examples/` — sample `.routelens/` requests, environments and a demo server.
 - `fixtures/` — small fake projects for the detection and scanner tests (see `fixtures/README.md`).
 

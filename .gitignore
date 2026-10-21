@@ -7,6 +7,8 @@ coverage/
 .DS_Store
 Thumbs.db
 out/
+# JUnit report written by `routelens run --junit` in CI
+routelens-report.xml
 .next/
 # Created by RouteLens when you try it on a fixture by hand
 fixtures/**/.routelens/

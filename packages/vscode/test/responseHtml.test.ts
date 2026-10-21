@@ -15,6 +15,7 @@ const response = (overrides: Partial<ApiResponse> = {}): ApiResponse => ({
   statusText: "OK",
   url: "http://localhost:4000/api/health",
   headers: { "content-type": "application/json" },
+  setCookies: [],
   body: '{"status":"ok"}',
   sizeBytes: 15,
   truncated: false,

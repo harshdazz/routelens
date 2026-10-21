@@ -129,6 +129,110 @@
       ],
       "description": "Request body."
     },
+    "expect": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "description": "A status code, a list of codes, or a class like \"2xx\".",
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 100,
+              "maximum": 599
+            },
+            {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 100,
+                "maximum": 599
+              }
+            },
+            {
+              "type": "string",
+              "pattern": "^[1-5]xx$"
+            }
+          ]
+        },
+        "body": {
+          "description": "The JSON response must contain these fields with these values. Objects may have more fields; arrays and other values must be equal."
+        },
+        "values": {
+          "description": "Path to an expected value or one check, e.g. { \"body.id\": { \"type\": \"number\" }, \"body.title\": \"Hello\" }.",
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "description": "A path into the response, e.g. \"body.id\", \"body.items[0].name\", \"headers.location\"."
+          },
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "equals": {
+                    "description": "Equal to this value."
+                  },
+                  "exists": {
+                    "description": "true: the value is there; false: it is missing.",
+                    "type": "boolean"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "object",
+                      "array",
+                      "null"
+                    ]
+                  },
+                  "contains": {
+                    "description": "A string contains this text, an array contains this item, or an object these fields."
+                  },
+                  "matches": {
+                    "description": "A regular expression the value must match.",
+                    "type": "string"
+                  },
+                  "lessThan": {
+                    "type": "number"
+                  },
+                  "greaterThan": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "description": "One check, e.g. { \"type\": \"number\" } or { \"contains\": \"json\" }."
+              }
+            ]
+          }
+        },
+        "maxDurationMs": {
+          "description": "Fail when the response is slower.",
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "description": "What the response must look like. Values may use {{variables}}. Without expect, a request passes when the status is below 400."
+    },
     "route": {
       "type": "object",
       "properties": {

@@ -1,0 +1,309 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "number",
+      "const": 1,
+      "description": "File format version."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "variables": {
+      "default": {},
+      "description": "Starting values for this flow; they override the environment. No secrets: this file is committed.",
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "steps": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Shown in results. Default: the request's name.",
+            "type": "string",
+            "minLength": 1
+          },
+          "request": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "description": "A saved request: its file name in .routelens/requests without .req.json, e.g. \"create-post\"."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "method": {
+                    "type": "string",
+                    "enum": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE",
+                      "HEAD",
+                      "OPTIONS"
+                    ]
+                  },
+                  "url": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Full URL. May contain {{variables}}, e.g. {{baseUrl}}/api/posts."
+                  },
+                  "headers": {
+                    "default": {},
+                    "description": "Header name to value. Values may contain {{variables}}.",
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "query": {
+                    "default": {},
+                    "description": "Query parameters appended to the URL.",
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "body": {
+                    "default": {
+                      "type": "none"
+                    },
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "none"
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "json"
+                          },
+                          "content": {
+                            "description": "Any JSON value. Strings may contain {{variables}}."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "content"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "text"
+                          },
+                          "content": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "content"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "form"
+                          },
+                          "content": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {
+                              "type": "string"
+                            },
+                            "description": "Sent as application/x-www-form-urlencoded."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "content"
+                        ]
+                      }
+                    ],
+                    "description": "Request body."
+                  }
+                },
+                "required": [
+                  "method",
+                  "url"
+                ],
+                "additionalProperties": false,
+                "description": "A request written in the step."
+              }
+            ]
+          },
+          "extract": {
+            "default": {},
+            "description": "Values to keep for the next steps, e.g. { \"postId\": \"body.id\" } → {{postId}}.",
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][\\w.-]*$"
+            },
+            "additionalProperties": {
+              "type": "string",
+              "description": "A path into the response, e.g. \"body.id\", \"body.items[0].name\", \"headers.location\"."
+            }
+          },
+          "expect": {
+            "description": "What the response must look like. Default: the saved request's expect, else status below 400.",
+            "type": "object",
+            "properties": {
+              "status": {
+                "description": "A status code, a list of codes, or a class like \"2xx\".",
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 100,
+                    "maximum": 599
+                  },
+                  {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 100,
+                      "maximum": 599
+                    }
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^[1-5]xx$"
+                  }
+                ]
+              },
+              "body": {
+                "description": "The JSON response must contain these fields with these values. Objects may have more fields; arrays and other values must be equal."
+              },
+              "values": {
+                "description": "Path to an expected value or one check, e.g. { \"body.id\": { \"type\": \"number\" }, \"body.title\": \"Hello\" }.",
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "description": "A path into the response, e.g. \"body.id\", \"body.items[0].name\", \"headers.location\"."
+                },
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "array",
+                      "items": {}
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "equals": {
+                          "description": "Equal to this value."
+                        },
+                        "exists": {
+                          "description": "true: the value is there; false: it is missing.",
+                          "type": "boolean"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "string",
+                            "number",
+                            "boolean",
+                            "object",
+                            "array",
+                            "null"
+                          ]
+                        },
+                        "contains": {
+                          "description": "A string contains this text, an array contains this item, or an object these fields."
+                        },
+                        "matches": {
+                          "description": "A regular expression the value must match.",
+                          "type": "string"
+                        },
+                        "lessThan": {
+                          "type": "number"
+                        },
+                        "greaterThan": {
+                          "type": "number"
+                        }
+                      },
+                      "additionalProperties": false,
+                      "description": "One check, e.g. { \"type\": \"number\" } or { \"contains\": \"json\" }."
+                    }
+                  ]
+                }
+              },
+              "maxDurationMs": {
+                "description": "Fail when the response is slower.",
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "request"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Run in order. The first failing step stops the flow."
+    }
+  },
+  "required": [
+    "version",
+    "name",
+    "steps"
+  ],
+  "description": "A RouteLens flow (.flow.json): requests run in order, replayed with plain code."
+}

@@ -5,5 +5,16 @@
   "url": "{{baseUrl}}/api/posts",
   "headers": {},
   "query": {},
-  "body": { "type": "json", "content": { "published": true } }
+  "body": {
+    "type": "json",
+    "content": {
+      "published": true
+    }
+  },
+  "expect": {
+    "status": 400,
+    "body": {
+      "error": "title is required and must be a non-empty string"
+    }
+  }
 }

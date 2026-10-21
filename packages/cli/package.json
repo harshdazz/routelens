@@ -1,0 +1,26 @@
+{
+  "name": "@routelens/cli",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Run your RouteLens requests and flows from the command line and in CI: routelens run.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "routelens": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@routelens/core": "workspace:*",
+    "esbuild": "^0.28.2"
+  }
+}

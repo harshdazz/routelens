@@ -3,8 +3,13 @@ export {
   HTTP_METHODS,
   METHODS_WITHOUT_BODY,
   environmentSchema,
+  expectSchema,
   fileJsonSchemas,
+  flowSchema,
+  flowStepSchema,
+  matcherSchema,
   parseEnvironment,
+  parseFlow,
   parseRequest,
   requestBodySchema,
   requestSchema,
@@ -13,22 +18,37 @@ export {
   type ApiRequestInput,
   type Environment,
   type EnvironmentInput,
+  type Expectation,
+  type Flow,
+  type FlowInput,
+  type FlowStep,
   type HttpMethod,
+  type Matcher,
   type RequestBody,
   type RouteLink,
 } from "./model.js";
 export {
   findVariables,
   interpolate,
+  placeholderName,
   type InterpolationResult,
   type Variables,
 } from "./variables.js";
-export { resolveRequest, type ResolveResult, type ResolvedRequest } from "./resolve.js";
+export {
+  fillJsonValue,
+  resolveRequest,
+  valuesAsText,
+  type ResolveResult,
+  type ResolvedRequest,
+  type TypedValues,
+} from "./resolve.js";
 export { sendRequest, type ApiResponse, type SendOptions } from "./send.js";
 export {
   DEFAULT_ENVIRONMENT,
   ENVIRONMENTS_DIR,
   ENVIRONMENT_FILE_SUFFIX,
+  FLOWS_DIR,
+  FLOW_FILE_SUFFIX,
   REQUESTS_DIR,
   REQUEST_FILE_SUFFIX,
   ROUTELENS_DIR,
@@ -36,11 +56,15 @@ export {
   environmentFilePath,
   findProjectRoot,
   listEnvironments,
+  listFlowFiles,
   listRequestFiles,
   normalizeBaseUrl,
   readEnvironment,
+  readFlowFile,
   readRequestFile,
   requestFilePath,
+  savedRequestName,
+  savedRequestPath,
   serializeEnvironment,
   serializeRequest,
   setEnvironmentVariables,
@@ -104,3 +128,30 @@ export {
   type DraftSyncOptions,
   type DraftSyncResult,
 } from "./scanner/drafts.js";
+export {
+  isResponsePath,
+  parseValuePath,
+  readValuePath,
+  PATH_ROOTS,
+  type PathSegment,
+} from "./runner/valuePath.js";
+export { checkResponse, expects401, responseSubject, type CheckResult } from "./runner/expect.js";
+export {
+  AuthSession,
+  findLoginRequest,
+  findToken,
+  withCredentials,
+  type AuthToken,
+  type Credentials,
+  type LoginOutcome,
+  type LoginRequest,
+} from "./runner/auth.js";
+export {
+  orderForRun,
+  runFlow,
+  runRequest,
+  type FlowRun,
+  type RequestRun,
+  type RunOptions,
+  type StepRun,
+} from "./runner/run.js";
