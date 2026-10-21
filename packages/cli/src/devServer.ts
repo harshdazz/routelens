@@ -1,5 +1,6 @@
 import { spawn, type ChildProcess } from "node:child_process";
-import { RouteLensError, waitForPort, type StartCommand } from "@routelens/core";
+import { setTimeout as sleep } from "node:timers/promises";
+import { RouteLensError, isPortOpen, waitForPort, type StartCommand } from "@routelens/core";
 
 /** Lines of server output kept to explain a crash or a timeout. */
 const KEPT_LINES = 40;
@@ -60,30 +61,46 @@ export function startDevServer(
     throw error;
   });
 
-  return { ready, output: () => [...lines], stop: () => stop(child) };
+  return { ready, output: () => [...lines], stop: () => stop(child, target) };
 }
 
-async function stop(child: ChildProcess): Promise<void> {
-  if (child.exitCode !== null || child.pid === undefined) return;
-  const exited = new Promise<void>((resolve) => child.once("exit", () => resolve()));
+/**
+ * Stop the server and everything it started. The shell can exit before the server it
+ * started (shell → npm → node), so the proof that it is gone is its port closing: wait for
+ * that, and force-kill the whole group if it is still open after 5 seconds.
+ */
+async function stop(child: ChildProcess, target: { host: string; port: number }): Promise<void> {
+  const pid = child.pid;
+  if (pid === undefined) return;
+  signal(pid, "SIGTERM");
+  if (await portClosed(target, 5_000)) return;
+  signal(pid, "SIGKILL");
+  await portClosed(target, 2_000);
+}
+
+/** Signal the server's whole process tree (it runs in its own group on Linux and macOS). */
+function signal(pid: number, name: "SIGTERM" | "SIGKILL"): void {
   try {
     if (process.platform === "win32") {
       // taskkill /T ends the shell and everything it started (npm, node, next...).
-      spawn("taskkill", ["/pid", String(child.pid), "/T", "/F"], { stdio: "ignore" });
+      spawn("taskkill", ["/pid", String(pid), "/T", "/F"], { stdio: "ignore" });
     } else {
-      process.kill(-child.pid, "SIGTERM");
+      process.kill(-pid, name);
     }
   } catch {
-    return; // already gone
+    // already gone
   }
-  const timer = setTimeout(() => {
-    try {
-      if (process.platform !== "win32" && child.pid !== undefined)
-        process.kill(-child.pid, "SIGKILL");
-    } catch {
-      // already gone
-    }
-  }, 5_000);
-  await exited;
-  clearTimeout(timer);
+}
+
+/** True once nothing answers on the port any more; false if it is still open after `timeoutMs`. */
+async function portClosed(
+  target: { host: string; port: number },
+  timeoutMs: number,
+): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  while (await isPortOpen(target.port, { host: target.host })) {
+    if (Date.now() > deadline) return false;
+    await sleep(100);
+  }
+  return true;
 }
