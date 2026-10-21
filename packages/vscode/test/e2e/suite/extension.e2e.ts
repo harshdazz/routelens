@@ -140,7 +140,13 @@ suite("RouteLens zero setup", () => {
       name: "local",
       variables: { baseUrl: `http://localhost:${port}` },
     });
-    assert.ok((await stat(firstRequest.fsPath)).isFile(), "first request was created");
+    // Written right after the environment, once the route scan picked the route.
+    await waitFor("the first request", () =>
+      stat(firstRequest.fsPath).then(
+        (info) => info.isFile() || undefined,
+        () => undefined,
+      ),
+    );
     // Not GET / (which many APIs don't answer): the health route RouteLens found in routes.js.
     const first = JSON.parse(await readFile(firstRequest.fsPath, "utf8"));
     assert.equal(first.url, "{{baseUrl}}/api/health");

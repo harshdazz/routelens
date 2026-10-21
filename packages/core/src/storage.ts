@@ -252,6 +252,11 @@ export async function createProjectFiles(
   options: CreateProjectFilesOptions = {},
 ): Promise<CreatedProjectFiles> {
   const created: CreatedProjectFiles = { environmentFile: undefined, requestFile: undefined };
+  // Find the first request (a route scan) before writing anything, so both files appear together.
+  const needsRequest = (await listRequestFiles(root)).length === 0;
+  const fromRoute = needsRequest
+    ? await options.firstRequest?.().catch(() => undefined)
+    : undefined;
 
   if (!(await readEnvironment(root, DEFAULT_ENVIRONMENT))) {
     created.environmentFile = await writeEnvironmentFile(root, {
@@ -261,9 +266,8 @@ export async function createProjectFiles(
     });
   }
 
-  if ((await listRequestFiles(root)).length === 0) {
+  if (needsRequest) {
     const filePath = requestFilePath(root, "First request");
-    const fromRoute = await options.firstRequest?.().catch(() => undefined);
     await writeRequestFile(
       filePath,
       fromRoute ?? {
