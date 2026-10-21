@@ -10,8 +10,10 @@ import {
   serializeRequest,
   writeRequestFile,
 } from "../storage.js";
-import { samplePath } from "./paths.js";
+import { findServerDir } from "../detect/detect.js";
+import { routeParams, samplePath } from "./paths.js";
 import type { DetectedRoute } from "./routes.js";
+import { scanRoutes } from "./scan.js";
 
 /**
  * Draft requests: one `.req.json` per detected route, kept up to date as the code changes
@@ -273,4 +275,46 @@ async function exists(file: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/** Health checks answer without data or a login: the safest first request to try. */
+const HEALTH_PATH = /\/(health|healthz|healthcheck)$/i;
+const STATUS_PATH = /\/(status|ping|ready|readyz|live|livez)$/i;
+
+/**
+ * The route for a project's first request: a GET route, a health check first, then a status
+ * or ping route, then one without parameters (nothing to guess, so it should answer), then
+ * the shortest path. `undefined` when the project has no GET route.
+ */
+export function pickFirstRoute(routes: readonly DetectedRoute[]): DetectedRoute | undefined {
+  const rank = (route: DetectedRoute): number => {
+    if (HEALTH_PATH.test(route.path)) return 0;
+    if (STATUS_PATH.test(route.path)) return 1;
+    return routeParams(route.path).length === 0 && !route.path.includes("{") ? 2 : 3;
+  };
+  return routes
+    .filter((route) => route.method === "GET")
+    .map((route, index) => ({ route, index }))
+    .sort(
+      (a, b) =>
+        rank(a.route) - rank(b.route) ||
+        a.route.path.length - b.route.path.length ||
+        a.index - b.index,
+    )[0]?.route;
+}
+
+/**
+ * Zero setup's first request when the code has a GET route: that route's draft, so it
+ * answers, follows the route when the code changes, and is not made a second time.
+ * `undefined` when RouteLens finds no GET route (zero setup then uses `GET /`).
+ */
+export async function projectFirstRequest(root: string): Promise<ApiRequestInput | undefined> {
+  const dir = await findServerDir(root).catch(() => undefined);
+  if (!dir) return undefined;
+  const route = pickFirstRoute((await scanRoutes(dir, { root })).routes);
+  if (!route) return undefined;
+  return {
+    ...draftRequest(route),
+    description: `Created by RouteLens from ${route.key} in ${route.file}. It follows that route when your code changes. Add more requests next to this file.`,
+  };
 }

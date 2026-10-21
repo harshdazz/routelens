@@ -131,7 +131,7 @@ suite("RouteLens zero setup", () => {
     await waitFor("activation", async () => extension.isActive || undefined);
   });
 
-  test("creates .routelens/ with the address it found in server.js", async () => {
+  test("creates .routelens/ with the address it found in server.js, and a first request for a real route", async () => {
     const text = await waitFor("local.env.json", () =>
       readFile(environmentFile, "utf8").catch(() => undefined),
     );
@@ -141,6 +141,10 @@ suite("RouteLens zero setup", () => {
       variables: { baseUrl: `http://localhost:${port}` },
     });
     assert.ok((await stat(firstRequest.fsPath)).isFile(), "first request was created");
+    // Not GET / (which many APIs don't answer): the health route RouteLens found in routes.js.
+    const first = JSON.parse(await readFile(firstRequest.fsPath, "utf8"));
+    assert.equal(first.url, "{{baseUrl}}/api/health");
+    assert.equal(first.route.key, "GET /api/health");
   });
 
   test("registers its commands", async () => {
@@ -205,6 +209,11 @@ suite("RouteLens zero setup", () => {
       project.routes.map((route) => route.key),
       ["GET /api/health", "POST /api/items", "POST /api/login", "GET /api/me"],
     );
+    // The first request is the health route's request: no second file for that route.
+    assert.equal(
+      project.drafts["GET /api/health"]?.toLowerCase(),
+      firstRequest.fsPath.toLowerCase(),
+    );
     const draft = JSON.parse(await readFile(project.drafts["POST /api/items"] ?? "", "utf8"));
     assert.equal(draft.url, "{{baseUrl}}/api/items");
     assert.deepEqual(draft.body, { type: "json", content: { name: "example", qty: 1 } });
@@ -220,9 +229,15 @@ suite("RouteLens zero setup", () => {
       return found.length >= 2 ? found : undefined;
     });
     assert.deepEqual(
-      lenses.map((lens) => [lens.range.start.line + 1, lens.command?.title]),
+      lenses.map((lens) => [
+        lens.range.start.line + 1,
+        lens.command?.title.replace(/· [\d.]+ m?s$/, "· time"),
+      ]),
       [
         [11, "$(play) Send GET /api/health"],
+        // The first request is the health route's request, sent in an earlier test: its
+        // result shows above the handler too.
+        [11, "✓ 200 OK · time"],
         [13, "$(play) Send POST /api/items"],
       ],
     );
@@ -299,10 +314,10 @@ suite("RouteLens zero setup", () => {
     } finally {
       vscode.window.showInputBox = showInputBox;
     }
-    // 5 requests (the first request and 4 route drafts) and 1 flow.
+    // 4 requests (one per route; the first request is the health route's) and 1 flow.
     assert.deepEqual(
       summaries.map(({ passed, failed, cancelled }) => ({ passed, failed, cancelled })),
-      [{ passed: 6, failed: 0, cancelled: false }],
+      [{ passed: 5, failed: 0, cancelled: false }],
     );
     assert.deepEqual(asked, ["email", "password"]);
 

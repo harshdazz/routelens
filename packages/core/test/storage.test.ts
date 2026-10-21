@@ -161,6 +161,37 @@ describe("createProjectFiles", () => {
     expect(request).toMatchObject({ method: "GET", url: "{{baseUrl}}/", body: { type: "none" } });
   });
 
+  it("writes the first request it is given, and asks for it only when there are no requests", async () => {
+    let asked = 0;
+    const firstRequest = async () => {
+      asked += 1;
+      return {
+        version: 1 as const,
+        name: "GET /api/health",
+        method: "GET" as const,
+        url: "{{baseUrl}}/api/health",
+      };
+    };
+    const created = await createProjectFiles(root, "http://localhost:3000", { firstRequest });
+    expect(created.requestFile).toBe(requestFilePath(root, "First request"));
+    expect(await readRequestFile(created.requestFile!)).toMatchObject({
+      url: "{{baseUrl}}/api/health",
+    });
+
+    await createProjectFiles(root, "http://localhost:3000", { firstRequest });
+    expect(asked).toBe(1);
+  });
+
+  it("falls back to GET / when no first request comes back, or finding one fails", async () => {
+    const failing = async () => {
+      throw new Error("scan failed");
+    };
+    const created = await createProjectFiles(root, "http://localhost:3000", {
+      firstRequest: failing,
+    });
+    expect(await readRequestFile(created.requestFile!)).toMatchObject({ url: "{{baseUrl}}/" });
+  });
+
   it("never overwrites existing files", async () => {
     await writeEnvironmentFile(root, { version: 1, name: "local", variables: { baseUrl: "mine" } });
     await writeRequestFile(requestFilePath(root, "Mine"), {

@@ -39,7 +39,7 @@ The old slice B items moved: environment picker and extension tests → M2; hist
 
 **Acceptance:** create, save, send and inspect requests against the demo server without leaving VS Code. ✅
 
-## M2 — Zero setup 🟡 built and verified, F5 hand check left (2026-10-21)
+## M2 — Zero setup ✅ (built 2026-10-21, tried by hand 2026-10-22)
 
 Goal: install → click ▶ Send → see the answer. No typed commands, no hand-written setup files ([ADR-0006](decisions/0006-zero-setup-detect-and-start-server.md)).
 
@@ -55,13 +55,13 @@ Goal: install → click ▶ Send → see the answer. No typed commands, no hand-
 - [x] Environment picker in the status bar (`local` / `staging` …)
 - [x] Get Started walkthrough with 3 steps that tick themselves
 - [x] Extension tests with `@vscode/test-electron`
-- [ ] Tried by hand with F5 (Harsh): "Run RouteLens on the Next.js fixture". Check the message wording, the terminal, the inline result, the status bar and the walkthrough
+- [x] Tried by hand with F5 (Harsh, 2026-10-22: everything worked): "Run RouteLens on the Next.js fixture". Check the message wording, the terminal, the inline result, the status bar and the walkthrough
 
 Details decided while building (detection order, monorepos, tasks, first-click rule) are in the update section of [ADR-0006](decisions/0006-zero-setup-detect-and-start-server.md).
 
 **Acceptance:** on a fresh Next.js fixture with its server off, install → click Send → 200, with no typed commands and no hand-written files. Tests green in CI. ✅ `pnpm test:acceptance` (2026-10-21): real VS Code 1.143, fresh copy of `fixtures/next-default` (Next.js 16), server off → Send → click "▶ Start server" → `next dev` starts → request sent again → `✓ 200 OK`, in about 10 s. `pnpm test:e2e` (8 tests) passes locally and is now a CI step; CI has not run it yet because nothing is pushed.
 
-## M3 — Reads your code 🟡 built and verified, F5 hand check left (2026-10-21, target was 2026-11-04)
+## M3 — Reads your code ✅ (built 2026-10-21, tried by hand 2026-10-22; target was 2026-11-04)
 
 Reads code with the TypeScript parser and never runs it ([ADR-0007](decisions/0007-route-scanner-static-parsing.md)).
 
@@ -74,13 +74,13 @@ Reads code with the TypeScript parser and never runs it ([ADR-0007](decisions/00
 - [x] "▶ Send" CodeLens above each detected route handler
 - [x] Routes tree view in the sidebar
 - [x] Drift: when a route changes, its draft request updates itself (fields the user edited are kept)
-- [ ] Tried by hand with F5 (Harsh): open `fixtures/express-routes` in the F5 window. Check the Routes view, the ▶ Send buttons, the "found N routes" message and a drift edit
+- [x] Tried by hand with F5 (Harsh, 2026-10-22: 14 routes, Could not read 1, ▶ Send buttons, drift kept the edit): open `fixtures/express-routes` in the F5 window. Check the Routes view, the ▶ Send buttons, the "found N routes" message and a drift edit
 
 Details decided while building (fingerprints in the `route` field, renames, deleted drafts, trust) are in [ADR-0007](decisions/0007-route-scanner-static-parsing.md).
 
 **Acceptance:** 95%+ of fixture routes detected; a sample body passes the route's own zod validation. ✅ (2026-10-21) 36 of 36 fixture routes detected (`scan.test.ts` checks each one). All 10 routes that validate with zod get a sample that their own schema accepts: `routeSamples.test.ts` loads the real schema from the fixture and runs it with the real zod. `zodSample.test.ts` checks about 100 more zod expressions the same way. `pnpm test:e2e` (12 tests, real VS Code 1.143) covers scanning, ▶ Send on a route and drift.
 
-## M4 — Autopilot 🟡 built and verified, F5 hand check and first CI run left (2026-10-21, target was 2026-11-11)
+## M4 — Autopilot 🟡 built and verified, tried by hand 2026-10-22; first CI run left (target was 2026-11-11)
 
 [ADR-0008](decisions/0008-autopilot-runner-flows-login.md)
 
@@ -91,12 +91,12 @@ Details decided while building (fingerprints in the `route` field, renames, dele
 - [x] `packages/cli`: `routelens run` (flows + requests, JUnit output). Package name `@routelens/cli`, because `routelens` is the extension's name in this repo
 - [x] GitHub Action example workflow (`examples/github-actions/routelens.yml`), and CI runs the CLI on `examples/`
 - [x] Rescan cache: unchanged files are not parsed again (needed for "within 2 seconds" on big projects)
-- [ ] Tried by hand with F5 (Harsh): Test everything on `examples/` with the demo server (login `demo@routelens.dev` / `demo-password`), ▶ Run flow, then save a route file in a fixture after a run
+- [x] Tried by hand with F5 (Harsh, 2026-10-22: done): Test everything on `examples/` with the demo server (login `demo@routelens.dev` / `demo-password`), ▶ Run flow, then save a route file in a fixture after a run
 - [ ] First CI run on GitHub (nothing pushed yet)
 
 **Acceptance:** on the fixtures, one click runs every detected route; saving a route file re-runs its tests within 2 seconds; a sample repo runs its flows in GitHub Actions. 🟡 (2026-10-21) `pnpm test:e2e` (15 tests, real VS Code 1.143): Test everything ran every route, the first request and a flow (6 passed, 0 failed), asking for the login once; ▶ Run flow passed; saving `routes.js` ran its request again about 300 ms after the save. The built CLI ran `examples/` against the demo server: 9 passed with `ROUTELENS_USERNAME`/`ROUTELENS_PASSWORD`, 7 passed and 2 failed (the 401s) without, with a JUnit report. CI runs the same command, but has not run on GitHub yet because nothing is pushed.
 
-## M5 — MCP: any AI agent can drive RouteLens 🟡 built and verified with Claude Code, Copilot hand check left (2026-10-21, target was 2026-11-18)
+## M5 — MCP: any AI agent can drive RouteLens ✅ (built 2026-10-21, Claude Code and Copilot checks 2026-10-21/22; target was 2026-11-18)
 
 [ADR-0009](decisions/0009-mcp-server-for-ai-agents.md)
 
@@ -108,9 +108,9 @@ Details decided while building (fingerprints in the `route` field, renames, dele
 - [x] Docs: [using RouteLens from Claude Code, Cursor and Copilot agent mode](using-with-ai-agents.md)
 - [x] Planted-bug fixture `fixtures/buggy-api` and a scripted acceptance test (`pnpm test:acceptance:mcp`)
 - [x] Real Claude Code run on a copy of `fixtures/buggy-api` (2026-10-21, see the acceptance note)
-- [ ] Tried by hand (Harsh): Copilot agent mode in VS Code on a copy of `fixtures/buggy-api`, asked "test my API and fix what's broken"
+- [x] Tried by hand (Harsh, 2026-10-22): Copilot agent mode in VS Code on a copy of `fixtures/buggy-api`, asked "test my API and fix what's broken"
 
-**Acceptance:** on a fixture with a planted bug, Claude Code and Copilot agent mode can "test my API and fix what's broken": list routes, run them, read the failing route and propose the fix. 🟡 (2026-10-21) The scripted agent (`pnpm test:acceptance:mcp`, real `npm ci` and server) does exactly these steps through the MCP tools: `list_routes` finds the 6 routes with no setup, `run_all` reports 5 passed and 1 failed (`GET /api/todos/:id`), `get_last_failure` returns the 404 and the handler's code with the buggy line, and after the fix `run_all` passes 6 of 6. `pnpm test:e2e` (17 tests, VS Code 1.143) starts the server the way VS Code registers it for Copilot (VS Code's own Node) and the way the Claude Code/Cursor config does (`node`), and lists the routes over stdio. **Real Claude Code run** (2026-10-21, Claude Code 2.1.266, Opus 5): connected with the exact `claude mcp add --scope local` command "Connect an AI Agent" runs, then `claude -p "Test my API and fix what's broken."` in a copy of the fixture (server under `node --watch`; RouteLens tools, Read and Edit pre-approved). It called `list_routes` → `run_all` (5 passed, 1 failed) → `get_last_failure` → read `src/routes/todos.js` → fixed line 24 with `Number(req.params.id)` "to match the siblings" → `send_request` (200) → `run_all` (6 of 6). It then probed past the samples and fixed two real issues RouteLens's samples don't cover (ids reused after a delete; invalid bodies answering 500 with a stack trace). 28 turns, 161 s, $1.32. Two findings fixed right after: the fixture's `package.json` named the "planted bug" (now neutral), and a correct 400 from a probe without `expect` read as ✗ (`send_request` now says how to expect it). Left: Copilot agent mode.
+**Acceptance:** on a fixture with a planted bug, Claude Code and Copilot agent mode can "test my API and fix what's broken": list routes, run them, read the failing route and propose the fix. 🟡 (2026-10-21) The scripted agent (`pnpm test:acceptance:mcp`, real `npm ci` and server) does exactly these steps through the MCP tools: `list_routes` finds the 6 routes with no setup, `run_all` reports 5 passed and 1 failed (`GET /api/todos/:id`), `get_last_failure` returns the 404 and the handler's code with the buggy line, and after the fix `run_all` passes 6 of 6. `pnpm test:e2e` (17 tests, VS Code 1.143) starts the server the way VS Code registers it for Copilot (VS Code's own Node) and the way the Claude Code/Cursor config does (`node`), and lists the routes over stdio. **Real Claude Code run** (2026-10-21, Claude Code 2.1.266, Opus 5): connected with the exact `claude mcp add --scope local` command "Connect an AI Agent" runs, then `claude -p "Test my API and fix what's broken."` in a copy of the fixture (server under `node --watch`; RouteLens tools, Read and Edit pre-approved). It called `list_routes` → `run_all` (5 passed, 1 failed) → `get_last_failure` → read `src/routes/todos.js` → fixed line 24 with `Number(req.params.id)` "to match the siblings" → `send_request` (200) → `run_all` (6 of 6). It then probed past the samples and fixed two real issues RouteLens's samples don't cover (ids reused after a delete; invalid bodies answering 500 with a stack trace). 28 turns, 161 s, $1.32. Two findings fixed right after: the fixture's `package.json` named the "planted bug" (now neutral), and a correct 400 from a probe without `expect` read as ✗ (`send_request` now says how to expect it). **Copilot agent mode** (2026-10-22, VS Code 1.143 with the packaged `.vsix`, Auto → gpt-6-luna, by Harsh): VS Code started the RouteLens MCP server on its own (`Discovered 7 tools` in its MCP log), Copilot used the RouteLens tools, fixed line 24 with `Number(req.params.id)`, and also fixed the id reuse after a delete (`nextTodoId`). Checked afterwards against the fixed code: `GET /api/todos/1` → 200; after `DELETE /api/todos/1` a new todo gets id 3, not a duplicate. Note: Copilot only sees the tools when the extension is installed; the F5 window can't be used, because it starts with other extensions turned off.
 
 ## M6 — Launch v0.1 ⬜ (target 2026-11-25)
 

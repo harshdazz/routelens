@@ -74,6 +74,7 @@ export {
   slugify,
   writeEnvironmentFile,
   writeRequestFile,
+  type CreateProjectFilesOptions,
   type CreatedProjectFiles,
 } from "./storage.js";
 export {
@@ -127,6 +128,8 @@ export {
   draftRequest,
   findRouteDrafts,
   fingerprint,
+  pickFirstRoute,
+  projectFirstRequest,
   syncRouteDrafts,
   updateDraft,
   type DraftSyncOptions,

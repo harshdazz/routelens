@@ -233,14 +233,23 @@ export interface CreatedProjectFiles {
   requestFile: string | undefined;
 }
 
+export interface CreateProjectFilesOptions {
+  /**
+   * The first request to write, asked for only when the project has no requests yet. Zero
+   * setup passes the request of a real GET route (`projectFirstRequest`); without one, the
+   * first request is `GET {{baseUrl}}/`.
+   */
+  firstRequest?: () => Promise<ApiRequestInput | undefined>;
+}
+
 /**
  * Zero setup (ADR-0006): create `.routelens/environments/local.env.json` with `baseUrl`,
- * and a first request (`GET {{baseUrl}}/`) when there are no requests yet.
- * Existing files are never overwritten.
+ * and a first request when there are no requests yet. Existing files are never overwritten.
  */
 export async function createProjectFiles(
   root: string,
   baseUrl: string,
+  options: CreateProjectFilesOptions = {},
 ): Promise<CreatedProjectFiles> {
   const created: CreatedProjectFiles = { environmentFile: undefined, requestFile: undefined };
 
@@ -254,13 +263,18 @@ export async function createProjectFiles(
 
   if ((await listRequestFiles(root)).length === 0) {
     const filePath = requestFilePath(root, "First request");
-    await writeRequestFile(filePath, {
-      version: 1,
-      name: "First request",
-      description: "Created by RouteLens. Change the path, or add more requests next to this file.",
-      method: "GET",
-      url: "{{baseUrl}}/",
-    });
+    const fromRoute = await options.firstRequest?.().catch(() => undefined);
+    await writeRequestFile(
+      filePath,
+      fromRoute ?? {
+        version: 1,
+        name: "First request",
+        description:
+          "Created by RouteLens. Change the path, or add more requests next to this file.",
+        method: "GET",
+        url: "{{baseUrl}}/",
+      },
+    );
     created.requestFile = filePath;
   }
   return created;

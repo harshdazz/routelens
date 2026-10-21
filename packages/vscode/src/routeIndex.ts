@@ -198,10 +198,12 @@ export class RouteIndex implements vscode.Disposable {
       this.output.appendLine(`  created ${path.relative(project.root, file)}`);
     for (const file of sync.updated)
       this.output.appendLine(`  updated ${path.relative(project.root, file)}`);
+    // Counts the routes, not the files made now: the first request may already be one of them.
+    const routeCount = project.result.routes.length;
     if (known === undefined && sync.created.length > 0) {
       void vscode.window
         .showInformationMessage(
-          `RouteLens: found ${sync.created.length === 1 ? "1 API route" : `${sync.created.length} API routes`} in your code and made a request for each.`,
+          `RouteLens: found ${routeCount === 1 ? "1 API route" : `${routeCount} API routes`} in your code and made a request for each.`,
           "Show routes",
         )
         .then((choice) => choice && vscode.commands.executeCommand("routelens.routes.focus"));

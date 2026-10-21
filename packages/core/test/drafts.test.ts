@@ -1,16 +1,21 @@
 import { mkdtemp, readFile, rm, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   draftRequest,
   findRouteDrafts,
   fingerprint,
+  pickFirstRoute,
+  projectFirstRequest,
   parseRequest,
   readRequestFile,
   serializeRequest,
   syncRouteDrafts,
+  requestFilePath,
   updateDraft,
+  writeRequestFile,
   type ApiRequest,
   type DetectedRoute,
 } from "../src/index.js";
@@ -256,5 +261,55 @@ describe("syncRouteDrafts", () => {
     };
     const created = await syncRouteDrafts(root, [createPost, sameSlug], { known });
     expect(created.created).toEqual([handWritten]);
+  });
+});
+
+describe("the first request", () => {
+  const route = (key: string): DetectedRoute => {
+    const [method = "GET", routePath = "/"] = key.split(" ");
+    return { ...getHealth, key, method: method as DetectedRoute["method"], path: routePath };
+  };
+  const pick = (...keys: string[]) => pickFirstRoute(keys.map(route))?.key;
+
+  it("picks a GET route: health check, then status, then no parameters, then the shortest", () => {
+    expect(pick("GET /api/posts", "GET /ready", "GET /api/health", "POST /api/login")).toBe(
+      "GET /api/health",
+    );
+    expect(pick("GET /api/posts", "GET /api/ping")).toBe("GET /api/ping");
+    expect(pick("GET /api/todos/:id", "GET /api/todos", "GET /api/stats/summary")).toBe(
+      "GET /api/todos",
+    );
+    expect(pick("GET /api/docs{/*slug}", "GET /api/todos/:id")).toBe("GET /api/todos/:id");
+    expect(pick("POST /api/items")).toBeUndefined();
+  });
+
+  it("is the draft of that route in a real project, linked to the route", async () => {
+    const fixture = (name: string) =>
+      fileURLToPath(new URL(`../../../fixtures/${name}`, import.meta.url));
+    expect(await projectFirstRequest(fixture("next-default"))).toMatchObject({
+      name: "GET /api/health",
+      method: "GET",
+      url: "{{baseUrl}}/api/health",
+      route: { key: "GET /api/health", file: "app/api/health/route.js" },
+      description: expect.stringContaining("Created by RouteLens from GET /api/health"),
+    });
+    expect((await projectFirstRequest(fixture("buggy-api")))?.url).toBe("{{baseUrl}}/api/health");
+    expect((await projectFirstRequest(fixture("express-routes")))?.url).toBe("{{baseUrl}}/health");
+    expect(await projectFirstRequest(fixture("vite"))).toBeUndefined();
+  });
+
+  it("counts as the route's draft, so the route doesn't get a second request", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "routelens-first-"));
+    try {
+      const file = requestFilePath(root, "First request");
+      await writeRequestFile(file, draftRequest(getHealth));
+      const sync = await syncRouteDrafts(root, [getHealth, createPost]);
+      expect(sync.drafts[getHealth.key]).toBe(file);
+      expect(sync.created.map((item) => path.basename(item))).toEqual([
+        "post-api-posts-id-comments.req.json",
+      ]);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 });

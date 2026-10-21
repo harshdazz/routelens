@@ -6,6 +6,7 @@ import {
   detectServer,
   listRequestFiles,
   normalizeBaseUrl,
+  projectFirstRequest,
   readEnvironment,
   setEnvironmentVariables,
   type AddressCandidate,
@@ -67,7 +68,7 @@ export async function setUpProject(root: string, deps: SetupDeps): Promise<void>
   const detection = await detect(root, deps);
   const existing = await readEnvironment(root, DEFAULT_ENVIRONMENT).catch(() => undefined);
   if (existing?.variables.baseUrl) {
-    const created = await createProjectFiles(root, existing.variables.baseUrl);
+    const created = await createFirstFiles(root, existing.variables.baseUrl);
     if (created.requestFile) deps.onProjectChanged();
     const choice = await vscode.window.showInformationMessage(
       `RouteLens: this project is set up. Requests use ${existing.variables.baseUrl}.`,
@@ -84,7 +85,7 @@ export async function setUpProject(root: string, deps: SetupDeps): Promise<void>
   // "If unclear, ask once with suggestions" (ADR-0006).
   const baseUrl = await pickAddress(detection, undefined);
   if (!baseUrl) return;
-  const created = await createProjectFiles(root, baseUrl);
+  const created = await createFirstFiles(root, baseUrl);
   deps.onProjectChanged();
   if (created.requestFile) await openFirstRequest(root);
 }
@@ -108,7 +109,7 @@ export async function changeServerAddress(
   if (!baseUrl) return undefined;
 
   await setEnvironmentVariables(root, DEFAULT_ENVIRONMENT, { baseUrl });
-  if ((await listRequestFiles(root)).length === 0) await createProjectFiles(root, baseUrl);
+  if ((await listRequestFiles(root)).length === 0) await createFirstFiles(root, baseUrl);
   deps.onProjectChanged();
   void vscode.window.showInformationMessage(`RouteLens: requests now go to ${baseUrl}.`);
   return baseUrl;
@@ -121,7 +122,7 @@ async function createFiles(
   deps: SetupDeps,
   detection: ServerDetection | undefined,
 ): Promise<void> {
-  const created = await createProjectFiles(root, address.baseUrl);
+  const created = await createFirstFiles(root, address.baseUrl);
   deps.onProjectChanged();
   const source = describeClue(address);
   deps.output.appendLine(`Found your API at ${address.baseUrl} (from ${source})`);
@@ -133,6 +134,14 @@ async function createFiles(
     "Change",
   );
   await handleChoice(choice, root, deps, detection);
+}
+
+/**
+ * `local.env.json` and a first request. When the code has a GET route, the first request is
+ * that route's request (a health check if there is one), so it answers instead of 404ing on `/`.
+ */
+function createFirstFiles(root: string, baseUrl: string) {
+  return createProjectFiles(root, baseUrl, { firstRequest: () => projectFirstRequest(root) });
 }
 
 async function handleChoice(

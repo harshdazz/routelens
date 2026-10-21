@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer as createHttpServer, type IncomingMessage, type Server } from "node:http";
 import { createServer as createNetServer, type AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
@@ -219,7 +219,13 @@ describe("tools", () => {
 
   it("list_routes works on a project without .routelens, from the detected address", async () => {
     const fixture = fileURLToPath(new URL("../../../fixtures/express-routes", import.meta.url));
-    const { call } = await connect({ root: fixture });
+    // A copy without .routelens/: trying the fixture by hand creates one (ignored by Git).
+    const copy = path.join(root, "express-routes");
+    await cp(fixture, copy, {
+      recursive: true,
+      filter: (source) => !/[\\/]\.routelens([\\/]|$)/.test(source),
+    });
+    const { call } = await connect({ root: copy });
     const result = jsonOf(await call("list_routes"));
     expect((result.routes as unknown[]).length).toBe(14);
     expect(result.environment).toMatchObject({
