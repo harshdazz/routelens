@@ -4,7 +4,7 @@
 
 RouteLens is a VS Code extension for full-stack developers. It finds the API routes in your Next.js or Express project, starts your server, builds and runs the requests by itself, and when something breaks it shows you the line of code that caused it.
 
-> Status: **pre-alpha**. Milestones M1 (core client), M2 (zero setup), M3 (reads your code) and M4 (autopilot) are built; M5 (MCP for AI agents) is next. See the [roadmap](docs/03-roadmap.md).
+> Status: **pre-alpha**. Milestones M1 (core client), M2 (zero setup), M3 (reads your code), M4 (autopilot) and M5 (works with your AI agent) are built; M6 (launch v0.1) is next. See the [roadmap](docs/03-roadmap.md).
 
 ## Why RouteLens
 
@@ -27,10 +27,11 @@ RouteLens is a VS Code extension for full-stack developers. It finds the API rou
 - **Checks and flows.** A request passes when its status is below 400, or add an `expect` block (`"status": 400`, `"body": { … }`, `"values": { "body.id": { "type": "number" } }`). A `.flow.json` file runs requests in order and passes values on ("create a post, then read it back"). Plain code replays both; no AI.
 - **Logs in by itself.** When a route answers 401, RouteLens finds your login route, asks for your login once, keeps it in your system keychain (never in files) and reuses the token.
 - **Same tests in CI.** `routelens run` runs the requests and flows from the command line, with a JUnit report, GitHub annotations and `--start` to start your dev server. See [examples/github-actions/routelens.yml](examples/github-actions/routelens.yml).
+- **Works with your AI agent.** Copilot agent mode, Claude Code and Cursor can list your routes, run them, read what failed with the route's code, and save flows, through RouteLens's MCP server. In VS Code it is already there; **RouteLens: Connect an AI Agent** sets up Claude Code or Cursor in one click. Requests only go to this machine or hosts in your environment files, and writes to other hosts need your OK. See [Using RouteLens with AI agents](docs/using-with-ai-agents.md).
 - **Inline results.** The answer appears next to the button, like `✓ 201 Created · 14 ms`. Hover for a body preview; click for the full panel (status, time, size, headers, pretty body).
 - **Environments.** Pick `local`, `staging` and so on from the status bar, and use `{{variables}}` from `.routelens/environments/*.env.json`.
 - Requests are `.routelens/requests/*.req.json` files with autocomplete. **RouteLens: New Request** creates one.
-- A **Get Started** walkthrough whose 5 steps tick themselves.
+- A **Get Started** walkthrough whose 6 steps tick themselves.
 
 Safety: RouteLens only starts servers in trusted workspaces, only runs the `dev` / `start` script from `package.json`, and the first start in each workspace always needs your click. The `routelens.autoStartServer` setting (`ask`, `always` or `never`) controls the starts after that.
 
@@ -59,11 +60,14 @@ pnpm --filter @routelens/cli build
 ROUTELENS_USERNAME=demo@routelens.dev ROUTELENS_PASSWORD=demo-password node packages/cli/dist/cli.js run examples
 ```
 
+To see an AI agent find a bug: copy `fixtures/buggy-api` somewhere, run `npm ci` and `npm run dev` there, open it in the F5 window, run **RouteLens: Connect an AI Agent**, and ask your agent "test my API and fix what's broken".
+
 More tests:
 
 ```bash
 pnpm test:e2e         # extension tests in a real VS Code (downloads it the first time)
 pnpm test:acceptance  # M2 check: fresh Next.js fixture, server off, click Send → 200
+pnpm test:acceptance:mcp  # M5 check: an agent's steps on fixtures/buggy-api find the planted bug
 ```
 
 ## Project layout
@@ -72,6 +76,7 @@ pnpm test:acceptance  # M2 check: fresh Next.js fixture, server off, click Send 
 packages/core     editor-independent logic (model, variables, HTTP engine, storage, detect, scanner, runner)
 packages/vscode   the VS Code extension
 packages/cli      `routelens run` for the terminal and CI
+packages/mcp      the MCP server AI agents use (`routelens-mcp`)
 examples/         sample requests, a flow, environments, a demo server and a GitHub Actions workflow
 fixtures/         small fake projects for the detection, scanner and acceptance tests
 docs/             lifecycle plan, product spec, architecture, roadmap, ADRs
@@ -83,6 +88,7 @@ docs/             lifecycle plan, product spec, architecture, roadmap, ADRs
 - [Product spec](docs/01-product-spec.md)
 - [Architecture](docs/02-architecture.md)
 - [Roadmap](docs/03-roadmap.md)
+- [Using RouteLens with AI agents](docs/using-with-ai-agents.md)
 - [Architecture decisions](docs/decisions/)
 
 ## License

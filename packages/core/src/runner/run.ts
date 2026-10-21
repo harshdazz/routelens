@@ -32,6 +32,11 @@ export interface RunOptions {
   auth?: AuthSession;
   /** Send even when `{{variables}}` are missing (the person said "Send anyway"). */
   allowMissingVariables?: boolean;
+  /**
+   * Called just before each request is sent, with its final method and URL (ADR-0009).
+   * Throw a RouteLensError "blocked" to stop it; the run then fails with that reason.
+   */
+  beforeSend?: (request: ResolvedRequest) => Promise<void>;
 }
 
 /** The result of one request: what was sent, what came back and every check. */
@@ -118,6 +123,7 @@ export async function runRequest(
   try {
     // Running the login request itself logs in, with the person's credentials when they gave them.
     if (auth && isLogin && !expects401(expectation)) {
+      await options.beforeSend?.(resolveRequest(request, variables, values).request);
       const outcome = await auth.logIn(allVariables, options.send, false);
       if (outcome.response) {
         run.response = outcome.response;
@@ -134,8 +140,10 @@ export async function runRequest(
       return finish();
     }
 
-    const send = (target: ResolvedRequest): Promise<ApiResponse> =>
-      sendRequest(useAuth ? auth.apply(target) : target, options.send);
+    const send = async (target: ResolvedRequest): Promise<ApiResponse> => {
+      await options.beforeSend?.(target);
+      return sendRequest(useAuth ? auth.apply(target) : target, options.send);
+    };
     let response = await send(resolved.request);
 
     if (response.status === 401 && useAuth && auth.covers(run.url, allVariables)) {

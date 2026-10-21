@@ -10,6 +10,7 @@ import {
   type Environment,
   type EnvironmentInput,
   type Flow,
+  type FlowInput,
 } from "./model.js";
 
 /** Folder in the user's project that holds everything RouteLens saves (see ADR-0003). */
@@ -81,6 +82,31 @@ export function savedRequestPath(root: string, name: string): string | undefined
   const dir = path.resolve(root, ROUTELENS_DIR, REQUESTS_DIR);
   const file = path.resolve(dir, `${name}${REQUEST_FILE_SUFFIX}`);
   return file.startsWith(dir + path.sep) ? file : undefined;
+}
+
+/** `<root>/.routelens/flows/<slug>.flow.json` */
+export function flowFilePath(root: string, name: string): string {
+  return path.join(root, ROUTELENS_DIR, FLOWS_DIR, `${slugify(name)}${FLOW_FILE_SUFFIX}`);
+}
+
+/** Stable, readable JSON for a flow, like `serializeRequest`. */
+export function serializeFlow(flow: FlowInput): string {
+  const ordered = {
+    version: flow.version,
+    name: flow.name,
+    ...(flow.description === undefined ? {} : { description: flow.description }),
+    ...(flow.variables === undefined || Object.keys(flow.variables).length === 0
+      ? {}
+      : { variables: flow.variables }),
+    steps: flow.steps,
+  };
+  return `${JSON.stringify(ordered, null, 2)}\n`;
+}
+
+/** Write a flow file (creating the folders) and return its path. */
+export async function writeFlowFile(filePath: string, flow: FlowInput): Promise<void> {
+  await mkdir(path.dirname(filePath), { recursive: true });
+  await writeFile(filePath, serializeFlow(flow), "utf8");
 }
 
 /** The name a flow step uses for a saved request: its path in the requests folder. */

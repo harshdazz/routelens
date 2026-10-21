@@ -1,13 +1,14 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { createServer, type IncomingMessage, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import type { RouteLensError } from "../src/index.js";
 import {
   AuthSession,
+  RouteLensError,
   findLoginRequest,
+  flowFilePath,
   orderForRun,
   parseFlow,
   parseRequest,
@@ -15,6 +16,7 @@ import {
   requestFilePath,
   runFlow,
   runRequest,
+  writeFlowFile,
   writeRequestFile,
   type ApiRequest,
   type ApiRequestInput,
@@ -484,5 +486,77 @@ describe("orderForRun", () => {
       "d",
       "a",
     ]);
+  });
+});
+
+describe("beforeSend", () => {
+  it("checks every request just before it goes out, and a refusal fails the run as blocked", async () => {
+    const seen: string[] = [];
+    const run = await runRequest(
+      request({
+        method: "POST",
+        url: "{{baseUrl}}/api/posts",
+        body: { type: "json", content: { title: "x" } },
+      }),
+      {
+        variables: { baseUrl },
+        beforeSend: async (target) => {
+          seen.push(`${target.method} ${target.url}`);
+          throw new RouteLensError("blocked", "Not this time.");
+        },
+      },
+    );
+    expect(seen).toEqual([`POST ${baseUrl}/api/posts`]);
+    expect(run).toMatchObject({
+      passed: false,
+      error: { code: "blocked", message: "Not this time." },
+    });
+    expect(run.response).toBeUndefined();
+    expect(posts.size).toBe(0);
+  });
+
+  it("also sees the retry after a login, and the login request itself", async () => {
+    const { auth } = session();
+    const seen: string[] = [];
+    const beforeSend = async (target: { method: string; url: string }) => {
+      seen.push(`${target.method} ${new URL(target.url).pathname}`);
+    };
+    await runRequest(request({ url: "{{baseUrl}}/api/me" }), {
+      variables: { baseUrl },
+      auth,
+      beforeSend,
+    });
+    await runRequest(loginRequest, {
+      variables: { baseUrl },
+      auth,
+      beforeSend,
+      file: "/x/login.req.json",
+    });
+    expect(seen).toEqual(["GET /api/me", "GET /api/me", "POST /api/auth/login"]);
+  });
+});
+
+describe("flow files", () => {
+  it("are written in a stable order and read back", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "routelens-flowfile-"));
+    try {
+      const file = flowFilePath(root, "Create & read!");
+      expect(path.relative(root, file)).toBe(
+        path.join(".routelens", "flows", "create-read.flow.json"),
+      );
+      await writeFlowFile(file, {
+        steps: [{ request: "create-post" }],
+        variables: {},
+        name: "Create & read",
+        version: 1,
+      });
+      const text = await readFile(file, "utf8");
+      expect(text).toBe(
+        '{\n  "version": 1,\n  "name": "Create & read",\n  "steps": [\n    {\n      "request": "create-post"\n    }\n  ]\n}\n',
+      );
+      expect(parseFlow(text).steps[0]?.request).toBe("create-post");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 });

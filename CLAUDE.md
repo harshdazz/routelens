@@ -34,6 +34,7 @@ pnpm check            # lint + typecheck + test + build (run before every commit
 pnpm test             # unit and integration tests (Vitest)
 pnpm test:e2e         # extension tests in a real VS Code (@vscode/test-electron, runs in CI)
 pnpm test:acceptance  # M2 check on a fresh copy of fixtures/next-default (npm ci, needs port 3000)
+pnpm test:acceptance:mcp  # M5 check: an agent's steps on a copy of fixtures/buggy-api (npm ci, port 3456)
 pnpm build            # bundle the extension and build core
 pnpm demo-server      # local API on http://localhost:4000 for trying requests
 node packages/cli/dist/cli.js run examples   # the CLI (after pnpm build), against the demo server
@@ -46,6 +47,7 @@ In VS Code, press **F5** ("Run RouteLens Extension") to launch a dev copy of VS 
 - `packages/core` — editor-independent logic: request model, variables, HTTP engine, file storage, `detect` (server address, package manager, start script), port checks, `scanner` (routes, zod samples, drafts; reads code with the TypeScript parser, never runs it) and `runner` (requests, flows, checks, auto-login; plain code, no AI). **Never import `vscode` here.**
 - `packages/vscode` — the VS Code extension (commands, CodeLens with inline results, Routes view and health board, route CodeLens, Test everything, watch mode, logins, response panel, server manager, environment picker, walkthrough). Thin layer over core.
 - `packages/cli` — `routelens run` for the terminal and CI (JUnit, `--start`). Bundled with esbuild into one file.
+- `packages/mcp` — the MCP server for AI agents (`routelens-mcp`, stdio): 7 tools over core, guard rails for hosts and writes (ADR-0009). Also bundled into the extension as `dist/mcp-server.js`.
 - `examples/` — sample `.routelens/` requests, environments and a demo server.
 - `fixtures/` — small fake projects for the detection and scanner tests (see `fixtures/README.md`).
 

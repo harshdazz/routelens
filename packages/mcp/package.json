@@ -1,0 +1,32 @@
+{
+  "name": "@routelens/mcp",
+  "version": "0.0.0",
+  "private": true,
+  "description": "RouteLens MCP server: lets AI agents list your API routes, run them and read failures.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "routelens-mcp": "./dist/routelens-mcp.cjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:acceptance": "vitest run --config vitest.acceptance.mts"
+  },
+  "dependencies": {
+    "typescript": "~5.9.3"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "@routelens/core": "workspace:*",
+    "esbuild": "^0.28.2",
+    "zod": "^4.6.7"
+  }
+}

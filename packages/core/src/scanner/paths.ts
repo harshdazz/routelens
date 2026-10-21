@@ -60,6 +60,56 @@ export function samplePath(routePath: string): string {
   return filled === "" ? "/" : filled;
 }
 
+/**
+ * The route a request goes to: same method, and a path pattern that matches the URL's path
+ * (`/api/posts/:id` matches `/api/posts/7`). When several match, the most specific wins:
+ * the one with the most fixed segments. `undefined` when none matches.
+ */
+export function matchRoute<T extends { method: string; path: string }>(
+  routes: readonly T[],
+  method: string,
+  url: string,
+): T | undefined {
+  let pathname: string;
+  try {
+    pathname = new URL(url, "http://localhost").pathname;
+  } catch {
+    return undefined;
+  }
+  const wanted = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+  let best: { route: T; fixed: number } | undefined;
+  for (const route of routes) {
+    if (route.method !== method.toUpperCase()) continue;
+    if (!pathPattern(route.path).test(wanted)) continue;
+    const fixed = route.path.split("/").filter((part) => part && !/[:*{]/.test(part)).length;
+    if (!best || fixed > best.fixed) best = { route, fixed };
+  }
+  return best?.route;
+}
+
+/** `/posts/:id` → /^\/posts\/[^/]+$/, `*rest` → one or more segments, `{…}` → optional. */
+function pathPattern(routePath: string): RegExp {
+  let source = "";
+  for (let at = 0; at < routePath.length;) {
+    const rest = routePath.slice(at);
+    const param = /^([:*])([A-Za-z_$][\w$]*)/.exec(rest);
+    if (param) {
+      source += param[1] === ":" ? "[^/]+" : ".+";
+      at += param[0].length;
+    } else if (rest[0] === "{") {
+      source += "(?:";
+      at += 1;
+    } else if (rest[0] === "}") {
+      source += ")?";
+      at += 1;
+    } else {
+      source += (rest[0] ?? "").replace(/[.+?^$()[\]|\\]/g, "\\$&");
+      at += 1;
+    }
+  }
+  return new RegExp(`^${source}$`);
+}
+
 /** Identity of a route: `POST /api/posts/:id`. */
 export function routeKey(method: string, routePath: string): string {
   return `${method} ${routePath}`;

@@ -129,6 +129,12 @@
         "command": "routelens.logOut",
         "title": "Log Out",
         "category": "RouteLens"
+      },
+      {
+        "command": "routelens.connectAgent",
+        "title": "Connect an AI Agent",
+        "category": "RouteLens",
+        "icon": "$(sparkle)"
       }
     ],
     "menus": {
@@ -196,6 +202,11 @@
           "command": "routelens.scanRoutes",
           "when": "view == routelens.routes",
           "group": "navigation@2"
+        },
+        {
+          "command": "routelens.connectAgent",
+          "when": "view == routelens.routes",
+          "group": "1_agent"
         }
       ],
       "view/item/context": [
@@ -286,6 +297,12 @@
         "url": "./schemas/flow.schema.json"
       }
     ],
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "routelens.mcp",
+        "label": "RouteLens"
+      }
+    ],
     "taskDefinitions": [
       {
         "type": "routelens",
@@ -357,6 +374,17 @@
             },
             "completionEvents": [
               "onCommand:routelens.testEverything"
+            ]
+          },
+          {
+            "id": "aiAgent",
+            "title": "Let your AI agent test your API",
+            "description": "Copilot agent mode, Claude Code and Cursor can list your routes, run them and read what failed, through RouteLens's MCP server. In VS Code it is already there; Claude Code and Cursor take one click.\n[Connect an AI agent](command:routelens.connectAgent)",
+            "media": {
+              "markdown": "media/walkthrough/ai-agent.md"
+            },
+            "completionEvents": [
+              "onCommand:routelens.connectAgent"
             ]
           },
           {

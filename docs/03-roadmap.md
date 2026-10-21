@@ -96,16 +96,21 @@ Details decided while building (fingerprints in the `route` field, renames, dele
 
 **Acceptance:** on the fixtures, one click runs every detected route; saving a route file re-runs its tests within 2 seconds; a sample repo runs its flows in GitHub Actions. 🟡 (2026-10-21) `pnpm test:e2e` (15 tests, real VS Code 1.143): Test everything ran every route, the first request and a flow (6 passed, 0 failed), asking for the login once; ▶ Run flow passed; saving `routes.js` ran its request again about 300 ms after the save. The built CLI ran `examples/` against the demo server: 9 passed with `ROUTELENS_USERNAME`/`ROUTELENS_PASSWORD`, 7 passed and 2 failed (the 401s) without, with a JUnit report. CI runs the same command, but has not run on GitHub yet because nothing is pushed.
 
-## M5 — MCP: any AI agent can drive RouteLens ⬜ (target 2026-11-18)
+## M5 — MCP: any AI agent can drive RouteLens 🟡 built and verified with Claude Code, Copilot hand check left (2026-10-21, target was 2026-11-18)
 
-- [ ] `packages/mcp` with `@modelcontextprotocol/sdk`: `list_routes`, `read_route_source`, `send_request`, `run_all`, `run_flow`, `save_flow`, `get_last_failure`
-- [ ] Guard rails: only hosts from the project's environment files by default; non-local `POST`/`PUT`/`PATCH`/`DELETE` need confirmation
-- [ ] Extension registers the MCP server with VS Code automatically (raise `engines.vscode` as needed)
-- [ ] One-click setup for Claude Code and Cursor
-- [ ] Tests: MCP SDK in-memory client against the fixtures
-- [ ] Docs: using RouteLens from Claude Code, Cursor and Copilot agent mode
+[ADR-0009](decisions/0009-mcp-server-for-ai-agents.md)
 
-**Acceptance:** on a fixture with a planted bug, Claude Code and Copilot agent mode can "test my API and fix what's broken": list routes, run them, read the failing route and propose the fix.
+- [x] `packages/mcp` with `@modelcontextprotocol/sdk` 1.32.1: `list_routes`, `read_route_source`, `send_request`, `run_all`, `run_flow`, `save_flow`, `get_last_failure`
+- [x] Guard rails: only hosts from the project's environment files by default; non-local `POST`/`PUT`/`PATCH`/`DELETE` need confirmation (MCP elicitation; refused when the app can't ask, unless `--allow-remote-writes`)
+- [x] Extension registers the MCP server with VS Code automatically. `engines.vscode` stays `^1.95.0`: the API is used when the editor has it (1.101+)
+- [x] One-click setup for Claude Code and Cursor ("RouteLens: Connect an AI Agent")
+- [x] Tests: MCP SDK in-memory client against the fixtures, plus the built bundle over stdio
+- [x] Docs: [using RouteLens from Claude Code, Cursor and Copilot agent mode](using-with-ai-agents.md)
+- [x] Planted-bug fixture `fixtures/buggy-api` and a scripted acceptance test (`pnpm test:acceptance:mcp`)
+- [x] Real Claude Code run on a copy of `fixtures/buggy-api` (2026-10-21, see the acceptance note)
+- [ ] Tried by hand (Harsh): Copilot agent mode in VS Code on a copy of `fixtures/buggy-api`, asked "test my API and fix what's broken"
+
+**Acceptance:** on a fixture with a planted bug, Claude Code and Copilot agent mode can "test my API and fix what's broken": list routes, run them, read the failing route and propose the fix. 🟡 (2026-10-21) The scripted agent (`pnpm test:acceptance:mcp`, real `npm ci` and server) does exactly these steps through the MCP tools: `list_routes` finds the 6 routes with no setup, `run_all` reports 5 passed and 1 failed (`GET /api/todos/:id`), `get_last_failure` returns the 404 and the handler's code with the buggy line, and after the fix `run_all` passes 6 of 6. `pnpm test:e2e` (17 tests, VS Code 1.143) starts the server the way VS Code registers it for Copilot (VS Code's own Node) and the way the Claude Code/Cursor config does (`node`), and lists the routes over stdio. **Real Claude Code run** (2026-10-21, Claude Code 2.1.266, Opus 5): connected with the exact `claude mcp add --scope local` command "Connect an AI Agent" runs, then `claude -p "Test my API and fix what's broken."` in a copy of the fixture (server under `node --watch`; RouteLens tools, Read and Edit pre-approved). It called `list_routes` → `run_all` (5 passed, 1 failed) → `get_last_failure` → read `src/routes/todos.js` → fixed line 24 with `Number(req.params.id)` "to match the siblings" → `send_request` (200) → `run_all` (6 of 6). It then probed past the samples and fixed two real issues RouteLens's samples don't cover (ids reused after a delete; invalid bodies answering 500 with a stack trace). 28 turns, 161 s, $1.32. Two findings fixed right after: the fixture's `package.json` named the "planted bug" (now neutral), and a correct 400 from a probe without `expect` read as ✗ (`send_request` now says how to expect it). Left: Copilot agent mode.
 
 ## M6 — Launch v0.1 ⬜ (target 2026-11-25)
 

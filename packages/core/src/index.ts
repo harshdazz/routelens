@@ -56,6 +56,7 @@ export {
   environmentFilePath,
   findProjectRoot,
   listEnvironments,
+  flowFilePath,
   listFlowFiles,
   listRequestFiles,
   normalizeBaseUrl,
@@ -65,6 +66,8 @@ export {
   requestFilePath,
   savedRequestName,
   savedRequestPath,
+  serializeFlow,
+  writeFlowFile,
   serializeEnvironment,
   serializeRequest,
   setEnvironmentVariables,
@@ -113,6 +116,7 @@ export type { DetectedRoute, RouteFramework, ScanResult, SkippedRoute } from "./
 export type { RouteBody } from "./scanner/body.js";
 export {
   joinRoutePath,
+  matchRoute,
   nextRoutePath,
   routeKey,
   routeParams,

@@ -8,7 +8,9 @@ export type RouteLensErrorCode =
   /** The user cancelled the request. */
   | "aborted"
   /** DNS failure, connection refused, TLS error, ... */
-  | "network";
+  | "network"
+  /** RouteLens did not send it: a guard rail said no (e.g. an AI agent's write to another host). */
+  | "blocked";
 
 /** Every error RouteLens raises on purpose. `message` is safe to show to the user. */
 export class RouteLensError extends Error {

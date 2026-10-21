@@ -1,4 +1,5 @@
 import * as assert from "node:assert/strict";
+import { spawn } from "node:child_process";
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import * as vscode from "vscode";
@@ -12,6 +13,69 @@ import {
 
 /** What `routelens.testEverything` returns (see src/testRunner.ts). */
 type RunSummary = { root: string; passed: number; failed: number; cancelled: boolean };
+/** What `routelens.connectAgent` returns (see src/agents.ts). */
+type ConnectResult = {
+  agent: string;
+  config: { command: string; args: string[]; env?: Record<string, string> };
+  detail: string;
+};
+
+/**
+ * Start an MCP server the way an agent does (a child process, JSON-RPC lines on stdio) and
+ * return a function that sends one request and waits for its answer.
+ */
+function mcpProcess(command: string, args: string[], env: Record<string, string> = {}) {
+  const child = spawn(command, args, {
+    env: { ...process.env, ...env },
+    stdio: ["pipe", "pipe", "ignore"],
+  });
+  let buffer = "";
+  const waiting = new Map<number, (message: { result?: unknown; error?: unknown }) => void>();
+  child.stdout.on("data", (chunk: Buffer) => {
+    buffer += chunk.toString("utf8");
+    let newline: number;
+    while ((newline = buffer.indexOf("\n")) >= 0) {
+      const line = buffer.slice(0, newline).trim();
+      buffer = buffer.slice(newline + 1);
+      if (!line) continue;
+      const message = JSON.parse(line) as { id?: number; result?: unknown; error?: unknown };
+      if (message.id !== undefined) waiting.get(message.id)?.(message);
+    }
+  });
+  let id = 0;
+  const request = (method: string, params: unknown) =>
+    new Promise<{ result?: unknown; error?: unknown }>((resolve, reject) => {
+      id += 1;
+      waiting.set(id, resolve);
+      setTimeout(() => reject(new Error(`No answer to ${method}`)), 20_000);
+      child.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id, method, params })}\n`);
+    });
+  const notify = (method: string) =>
+    child.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", method })}\n`);
+  return { request, notify, stop: () => child.kill() };
+}
+
+/** initialize, then list_routes: the first two things an agent does. Returns the route keys. */
+async function listRoutesOverStdio(command: string, args: string[], env?: Record<string, string>) {
+  const server = mcpProcess(command, args, env);
+  try {
+    const hello = await server.request("initialize", {
+      protocolVersion: "2025-06-18",
+      capabilities: {},
+      clientInfo: { name: "e2e-agent", version: "1.0.0" },
+    });
+    assert.equal((hello.result as { serverInfo: { name: string } }).serverInfo.name, "routelens");
+    server.notify("notifications/initialized");
+    const call = await server.request("tools/call", { name: "list_routes", arguments: {} });
+    const text = (call.result as { content: Array<{ text: string }> }).content[0]?.text ?? "{}";
+    return (JSON.parse(text) as { routes: Array<{ route: string }> }).routes.map(
+      (route) => route.route,
+    );
+  } finally {
+    server.stop();
+  }
+}
+
 /** What `routelens.runFlow` returns. */
 type FlowResult =
   { kind: "flow"; view: { run: { passed: boolean; steps: unknown[] } } } | undefined;
@@ -97,6 +161,7 @@ suite("RouteLens zero setup", () => {
       "routelens.testEverything",
       "routelens.runFlow",
       "routelens.logOut",
+      "routelens.connectAgent",
     ]) {
       assert.ok(commands.includes(command), `${command} is registered`);
     }
@@ -307,6 +372,45 @@ suite("RouteLens zero setup", () => {
     const elapsed = Date.now() - saved;
     assert.ok(Number(after) > Number(before));
     assert.ok(elapsed < 2_000, `ran again ${elapsed} ms after the save`);
+  });
+
+  test("Connect an AI Agent: the copied MCP config starts a server that lists the routes (M5)", async () => {
+    const result = await vscode.commands.executeCommand<ConnectResult>(
+      "routelens.connectAgent",
+      "copy",
+    );
+    assert.ok(result, "the command returns what it did");
+    const [serverFile, rootFlag, root] = result.config.args;
+    assert.match(serverFile ?? "", /routelens-mcp\.cjs$/);
+    assert.ok(
+      (await stat(serverFile ?? "")).isFile(),
+      "the server is copied to the extension's storage",
+    );
+    assert.equal(rootFlag, "--root");
+    assert.equal(root?.toLowerCase(), workspace.toLowerCase());
+    assert.equal(await vscode.env.clipboard.readText(), result.detail);
+    assert.deepEqual(JSON.parse(result.detail).mcpServers.routelens, result.config);
+
+    const routes = await listRoutesOverStdio(
+      result.config.command,
+      result.config.args,
+      result.config.env,
+    );
+    assert.deepEqual(routes, [
+      "GET /api/health",
+      "POST /api/items",
+      "POST /api/login",
+      "GET /api/me",
+    ]);
+  });
+
+  test("the server VS Code registers for Copilot runs on VS Code's own Node.js", async () => {
+    const extension = vscode.extensions.getExtension("harshdazz.routelens");
+    const bundled = path.join(extension?.extensionPath ?? "", "dist", "mcp-server.js");
+    const routes = await listRoutesOverStdio(process.execPath, [bundled, "--root", workspace], {
+      ELECTRON_RUN_AS_NODE: "1",
+    });
+    assert.equal(routes.length, 4);
   });
 
   test("with autoStartServer = always, Send starts a stopped server and sends again", async () => {

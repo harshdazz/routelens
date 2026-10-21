@@ -1,0 +1,12 @@
+{
+  "name": "todo-api",
+  "private": true,
+  "description": "A small todo API.",
+  "scripts": {
+    "dev": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^5.3.0",
+    "zod": "^4.6.7"
+  }
+}

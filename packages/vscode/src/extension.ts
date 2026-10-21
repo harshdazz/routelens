@@ -1,5 +1,11 @@
 import path from "node:path";
 import * as vscode from "vscode";
+import {
+  connectAgentCommand,
+  installStableServer,
+  registerMcpServers,
+  type AgentChoice,
+} from "./agents";
 import { RUN_FLOW, RequestCodeLensProvider } from "./codeLens";
 import { newRequestCommand } from "./commands/newRequest";
 import { openRouteRequestCommand, scanRoutesCommand, sendRouteCommand } from "./commands/routes";
@@ -105,6 +111,10 @@ export function activate(context: vscode.ExtensionContext): void {
     routesView,
     routes.onDidChange(updateViewDescription),
     runner.onDidChange(updateViewDescription),
+    registerMcpServers(context),
+    vscode.commands.registerCommand("routelens.connectAgent", async (choice?: AgentChoice) =>
+      connectAgentCommand(context, (await currentProjectRoot()) ?? (await pickFolder()), choice),
+    ),
     vscode.commands.registerCommand("routelens.testEverything", () => runner.testEverything()),
     vscode.commands.registerCommand("routelens.runFlow", (target?: unknown) =>
       runner.runFlowFile(fileUriOf(target)),
@@ -192,6 +202,8 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidChangeWorkspaceFolders(() => void startUp()),
   );
   void startUp();
+  // Agents set up earlier keep running the current server after an update (ADR-0009).
+  void installStableServer(context, true).catch(() => undefined);
 }
 
 export function deactivate(): void {
