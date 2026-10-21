@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "customConditions": ["source"],
+    "types": ["node", "vscode"],
+    "noEmit": true
+  },
+  "include": ["src", "test"],
+  "exclude": ["test/e2e"]
+}

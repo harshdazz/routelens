@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "name": "Get health",
+  "method": "GET",
+  "url": "{{baseUrl}}/api/health",
+  "headers": {},
+  "query": {},
+  "body": { "type": "none" }
+}

@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "name": "Create post (missing title, expect 400)",
+  "method": "POST",
+  "url": "{{baseUrl}}/api/posts",
+  "headers": {},
+  "query": {},
+  "body": { "type": "json", "content": { "published": true } }
+}

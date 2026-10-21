@@ -1,0 +1,12 @@
+node_modules/
+dist/
+*.vsix
+*.log
+.vscode-test/
+coverage/
+.DS_Store
+Thumbs.db
+out/
+.next/
+# Created by RouteLens when you try it on a fixture by hand
+fixtures/**/.routelens/

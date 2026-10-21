@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "name": "get post 2",
+  "method": "GET",
+  "url": "{{baseUrl}}/",
+  "headers": {},
+  "query": {},
+  "body": {
+    "type": "none"
+  }
+}

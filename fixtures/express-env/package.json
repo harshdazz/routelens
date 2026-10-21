@@ -1,0 +1,12 @@
+{
+  "name": "fixture-express-env",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.0.0",
+    "express": "^5.1.0"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run RouteLens Extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        // Load only RouteLens in the test window: other installed extensions can crash
+        // the debugged extension host and make the window close right after opening.
+        "--disable-extensions",
+        "--extensionDevelopmentPath=${workspaceFolder}/packages/vscode",
+        "${workspaceFolder}/examples"
+      ],
+      "outFiles": ["${workspaceFolder}/packages/vscode/dist/**/*.js"],
+      // Writes a debugger log (path shown in the Debug Console) for troubleshooting.
+      "trace": true,
+      "preLaunchTask": "build extension"
+    },
+    {
+      // Zero setup (M2) on a real Next.js project. Run `npm ci` in fixtures/next-default once.
+      // The .routelens/ folder RouteLens creates there is ignored by Git.
+      "name": "Run RouteLens on the Next.js fixture",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--disable-extensions",
+        "--extensionDevelopmentPath=${workspaceFolder}/packages/vscode",
+        "${workspaceFolder}/fixtures/next-default"
+      ],
+      "outFiles": ["${workspaceFolder}/packages/vscode/dist/**/*.js"],
+      "preLaunchTask": "build extension"
+    }
+  ]
+}

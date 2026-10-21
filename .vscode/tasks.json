@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build extension",
+      "type": "shell",
+      "command": "pnpm --filter routelens build",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "demo server",
+      "type": "shell",
+      "command": "pnpm demo-server",
+      "isBackground": true,
+      "problemMatcher": []
+    }
+  ]
+}

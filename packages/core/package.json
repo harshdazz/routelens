@@ -1,0 +1,28 @@
+{
+  "name": "@routelens/core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Editor-independent core of RouteLens: request model, variables, HTTP engine and storage.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "name": "Get post by id",
+  "method": "GET",
+  "url": "{{baseUrl}}/api/posts/{{postId}}",
+  "headers": {},
+  "query": {},
+  "body": { "type": "none" }
+}

@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "name": "Create post",
+  "method": "POST",
+  "url": "{{baseUrl}}/api/posts",
+  "headers": {},
+  "query": {},
+  "body": {
+    "type": "json",
+    "content": { "title": "My first post from RouteLens", "published": true }
+  }
+}

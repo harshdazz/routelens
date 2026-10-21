@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "name": "List published posts",
+  "method": "GET",
+  "url": "{{baseUrl}}/api/posts",
+  "headers": {},
+  "query": { "published": "true" },
+  "body": { "type": "none" }
+}

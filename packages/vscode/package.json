@@ -1,0 +1,250 @@
+{
+  "name": "routelens",
+  "displayName": "RouteLens",
+  "description": "The API client that reads your code.",
+  "version": "0.0.1",
+  "publisher": "harshdazz",
+  "license": "MIT",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/harshdazz/routelens"
+  },
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Testing",
+    "Other"
+  ],
+  "keywords": [
+    "api",
+    "rest",
+    "http",
+    "client",
+    "nextjs",
+    "express",
+    "ai"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "workspaceContains:package.json",
+    "workspaceContains:**/*.req.json"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Sending requests and starting your dev server are disabled until you trust the workspace."
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "routelens.sendRequest",
+        "title": "Send Request",
+        "category": "RouteLens",
+        "icon": "$(play)"
+      },
+      {
+        "command": "routelens.newRequest",
+        "title": "New Request",
+        "category": "RouteLens",
+        "icon": "$(add)"
+      },
+      {
+        "command": "routelens.setUpProject",
+        "title": "Set Up Project",
+        "category": "RouteLens"
+      },
+      {
+        "command": "routelens.changeServerAddress",
+        "title": "Change Server Address",
+        "category": "RouteLens"
+      },
+      {
+        "command": "routelens.startServer",
+        "title": "Start Server",
+        "category": "RouteLens",
+        "icon": "$(play-circle)"
+      },
+      {
+        "command": "routelens.stopServer",
+        "title": "Stop Server",
+        "category": "RouteLens",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "routelens.selectEnvironment",
+        "title": "Select Environment",
+        "category": "RouteLens"
+      },
+      {
+        "command": "routelens.showLastResponse",
+        "title": "Show Last Response",
+        "category": "RouteLens"
+      },
+      {
+        "command": "routelens.openFirstRequest",
+        "title": "Open First Request",
+        "category": "RouteLens"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "routelens.sendRequest",
+          "when": "resourceFilename =~ /\\.req\\.json$/",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "routelens.sendRequest",
+          "when": "resourceFilename =~ /.req.json$/"
+        },
+        {
+          "command": "routelens.showLastResponse",
+          "when": "resourceFilename =~ /.req.json$/"
+        },
+        {
+          "command": "routelens.startServer",
+          "when": "isWorkspaceTrusted"
+        },
+        {
+          "command": "routelens.stopServer",
+          "when": "isWorkspaceTrusted"
+        },
+        {
+          "command": "routelens.openFirstRequest",
+          "when": "false"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "RouteLens",
+      "properties": {
+        "routelens.environment": {
+          "type": "string",
+          "default": "local",
+          "description": "Default environment: the name of a file in .routelens/environments/ without .env.json. The status bar picker overrides it for this workspace."
+        },
+        "routelens.timeoutMs": {
+          "type": "number",
+          "default": 30000,
+          "minimum": 1000,
+          "description": "Request timeout in milliseconds."
+        },
+        "routelens.autoStartServer": {
+          "type": "string",
+          "enum": [
+            "ask",
+            "always",
+            "never"
+          ],
+          "enumDescriptions": [
+            "Offer \"Start server\" each time you send a request while your local server is off.",
+            "Start it without asking. The first start in each workspace still needs a click.",
+            "Never offer to start it."
+          ],
+          "default": "ask",
+          "markdownDescription": "What to do when you send a request to `localhost` and nothing is running. RouteLens only runs the `dev` (or `start`) script from your `package.json`, in a visible terminal, in trusted workspaces."
+        }
+      }
+    },
+    "jsonValidation": [
+      {
+        "fileMatch": "*.req.json",
+        "url": "./schemas/request.schema.json"
+      },
+      {
+        "fileMatch": "*.env.json",
+        "url": "./schemas/environment.schema.json"
+      }
+    ],
+    "taskDefinitions": [
+      {
+        "type": "routelens",
+        "required": [
+          "script",
+          "cwd"
+        ],
+        "properties": {
+          "script": {
+            "type": "string",
+            "enum": [
+              "dev",
+              "start"
+            ],
+            "description": "The package.json script RouteLens runs."
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Folder of the package.json."
+          }
+        }
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "getStarted",
+        "title": "Get started with RouteLens",
+        "description": "Send your first API request in under a minute. No setup files, no terminal commands.",
+        "steps": [
+          {
+            "id": "findApi",
+            "title": "Find your API",
+            "description": "RouteLens reads your package.json, .env and server code to find where your API runs, and creates .routelens/ for you.\n[Find my API](command:routelens.setUpProject)",
+            "media": {
+              "markdown": "media/walkthrough/find-api.md"
+            },
+            "completionEvents": [
+              "onContext:routelens.projectReady"
+            ]
+          },
+          {
+            "id": "sendRequest",
+            "title": "Send your first request",
+            "description": "Click ▶ Send request at the top of the file. If your server is off, RouteLens offers to start it and sends again when it is ready.\n[Open first request](command:routelens.openFirstRequest)",
+            "media": {
+              "markdown": "media/walkthrough/send-request.md"
+            },
+            "completionEvents": [
+              "onContext:routelens.sentRequest"
+            ]
+          },
+          {
+            "id": "environments",
+            "title": "Switch environments",
+            "description": "Pick local, staging or any other environment from the status bar.\n[Pick an environment](command:routelens.selectEnvironment)",
+            "media": {
+              "markdown": "media/walkthrough/environments.md"
+            },
+            "completionEvents": [
+              "onCommand:routelens.selectEnvironment"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.e2e.json --noEmit",
+    "test": "vitest run",
+    "package": "vsce package --no-dependencies",
+    "test:e2e": "node esbuild.mjs && tsc -p tsconfig.e2e.json && node test/e2e/runTest.mjs extension",
+    "test:acceptance": "node esbuild.mjs && tsc -p tsconfig.e2e.json && node test/e2e/runTest.mjs acceptance"
+  },
+  "dependencies": {
+    "@routelens/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/vscode": "~1.95.0",
+    "@vscode/test-electron": "^3.1.0",
+    "@vscode/vsce": "^4.0.0",
+    "esbuild": "^0.28.2",
+    "mocha": "^11.8.0"
+  }
+}

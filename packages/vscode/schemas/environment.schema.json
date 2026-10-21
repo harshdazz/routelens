@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "number",
+      "const": 1,
+      "description": "File format version."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "variables": {
+      "default": {},
+      "description": "Variable name to value. Do not put secrets here: this file is committed.",
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "version",
+    "name"
+  ],
+  "description": "A RouteLens environment (.env.json)."
+}
