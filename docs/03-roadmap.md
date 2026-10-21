@@ -80,7 +80,7 @@ Details decided while building (fingerprints in the `route` field, renames, dele
 
 **Acceptance:** 95%+ of fixture routes detected; a sample body passes the route's own zod validation. ✅ (2026-10-21) 36 of 36 fixture routes detected (`scan.test.ts` checks each one). All 10 routes that validate with zod get a sample that their own schema accepts: `routeSamples.test.ts` loads the real schema from the fixture and runs it with the real zod. `zodSample.test.ts` checks about 100 more zod expressions the same way. `pnpm test:e2e` (12 tests, real VS Code 1.143) covers scanning, ▶ Send on a route and drift.
 
-## M4 — Autopilot 🟡 built and verified, tried by hand 2026-10-22; first CI run left (target was 2026-11-11)
+## M4 — Autopilot ✅ (built 2026-10-21, tried by hand and green in CI 2026-10-22; target was 2026-11-11)
 
 [ADR-0008](decisions/0008-autopilot-runner-flows-login.md)
 
@@ -92,9 +92,9 @@ Details decided while building (fingerprints in the `route` field, renames, dele
 - [x] GitHub Action example workflow (`examples/github-actions/routelens.yml`), and CI runs the CLI on `examples/`
 - [x] Rescan cache: unchanged files are not parsed again (needed for "within 2 seconds" on big projects)
 - [x] Tried by hand with F5 (Harsh, 2026-10-22: done): Test everything on `examples/` with the demo server (login `demo@routelens.dev` / `demo-password`), ▶ Run flow, then save a route file in a fixture after a run
-- [ ] First CI run on GitHub (nothing pushed yet)
+- [x] First CI run on GitHub (2026-10-22): the first two runs found two Linux-only problems (stopping a `--start` dev server; a race between `local.env.json` and the first request), both fixed; green from `883aea8`, including `routelens run examples` against the demo server
 
-**Acceptance:** on the fixtures, one click runs every detected route; saving a route file re-runs its tests within 2 seconds; a sample repo runs its flows in GitHub Actions. 🟡 (2026-10-21) `pnpm test:e2e` (15 tests, real VS Code 1.143): Test everything ran every route, the first request and a flow (6 passed, 0 failed), asking for the login once; ▶ Run flow passed; saving `routes.js` ran its request again about 300 ms after the save. The built CLI ran `examples/` against the demo server: 9 passed with `ROUTELENS_USERNAME`/`ROUTELENS_PASSWORD`, 7 passed and 2 failed (the 401s) without, with a JUnit report. CI runs the same command, but has not run on GitHub yet because nothing is pushed.
+**Acceptance:** on the fixtures, one click runs every detected route; saving a route file re-runs its tests within 2 seconds; a sample repo runs its flows in GitHub Actions. ✅ (2026-10-21, CI 2026-10-22) `pnpm test:e2e` (15 tests, real VS Code 1.143): Test everything ran every route, the first request and a flow (6 passed, 0 failed), asking for the login once; ▶ Run flow passed; saving `routes.js` ran its request again about 300 ms after the save. The built CLI ran `examples/` against the demo server: 9 passed with `ROUTELENS_USERNAME`/`ROUTELENS_PASSWORD`, 7 passed and 2 failed (the 401s) without, with a JUnit report. GitHub Actions runs the same command on every push (`examples/` with its flow and the demo login): green since `883aea8`.
 
 ## M5 — MCP: any AI agent can drive RouteLens ✅ (built 2026-10-21, Claude Code and Copilot checks 2026-10-21/22; target was 2026-11-18)
 

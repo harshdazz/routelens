@@ -196,17 +196,17 @@ docs/             lifecycle plan, product spec, architecture, roadmap, decisions
 
 ## Roadmap
 
-| Milestone                   | Status                                                 |
-| --------------------------- | ------------------------------------------------------ |
-| M0 Foundation               | ✅ done                                                |
-| M1 Core client              | ✅ done                                                |
-| M2 Zero setup               | ✅ done                                                |
-| M3 Reads your code          | ✅ done                                                |
-| M4 Autopilot                | 🟡 built and tried by hand; waits for its first CI run |
-| M5 Works with your AI agent | ✅ done (Claude Code and Copilot checked)              |
-| M6 Launch v0.1              | ⏳ next: Marketplace, Open VSX, npm, demo              |
-| M7 Built-in AI brain (v0.2) | planned                                                |
-| M8 Essentials (v0.3)        | planned                                                |
+| Milestone                   | Status                                    |
+| --------------------------- | ----------------------------------------- |
+| M0 Foundation               | ✅ done                                   |
+| M1 Core client              | ✅ done                                   |
+| M2 Zero setup               | ✅ done                                   |
+| M3 Reads your code          | ✅ done                                   |
+| M4 Autopilot                | ✅ done (tried by hand, green in CI)      |
+| M5 Works with your AI agent | ✅ done (Claude Code and Copilot checked) |
+| M6 Launch v0.1              | ⏳ next: Marketplace, Open VSX, npm, demo |
+| M7 Built-in AI brain (v0.2) | planned                                   |
+| M8 Essentials (v0.3)        | planned                                   |
 
 Details and dates are in the [roadmap](docs/03-roadmap.md).
 
