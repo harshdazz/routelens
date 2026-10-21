@@ -5,11 +5,17 @@
   "version": "0.0.1",
   "publisher": "harshdazz",
   "license": "MIT",
-  "private": true,
+  "author": "Harsh Dubey",
   "repository": {
     "type": "git",
-    "url": "https://github.com/harshdazz/routelens"
+    "url": "https://github.com/harshdazz/routelens.git",
+    "directory": "packages/vscode"
   },
+  "homepage": "https://github.com/harshdazz/routelens#readme",
+  "bugs": {
+    "url": "https://github.com/harshdazz/routelens/issues"
+  },
+  "private": true,
   "engines": {
     "vscode": "^1.95.0"
   },
