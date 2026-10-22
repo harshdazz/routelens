@@ -12,3 +12,7 @@ routelens-report.xml
 .next/
 # Created by RouteLens when you try it on a fixture by hand
 fixtures/**/.routelens/
+
+# Personal Claude Code notes: kept on this computer, not published
+/CLAUDE.md
+/MEMORY.md

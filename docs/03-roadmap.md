@@ -12,7 +12,7 @@ Legend: ✅ done · 🟡 in progress · ⬜ not started
 
 ## M0 — Foundation ✅ (2026-10-21)
 
-- [x] Project folder, CLAUDE.md, MEMORY.md
+- [x] Project folder and Claude Code notes (kept locally, not in the repo)
 - [x] Lifecycle plan, product spec, architecture, ADRs 0001–0004
 - [x] pnpm monorepo: `packages/core`, `packages/vscode`
 - [x] TypeScript strict, ESLint, Prettier, Vitest, esbuild
