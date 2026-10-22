@@ -2,15 +2,15 @@
 
 This is how RouteLens goes from idea to a released product. Each phase has a clear output and a **gate**: we only move on when the gate is passed.
 
-| #   | Phase           | Output                                                              | Gate                                              | Status                                            |
-| --- | --------------- | ------------------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------- |
-| 0   | Discovery       | Market scan, chosen idea                                            | Clear gap we can fill                             | ✅ Done (2026-10-21)                              |
-| 1   | Requirements    | [Product spec](01-product-spec.md)                                  | MVP scope and non-goals agreed                    | ✅ Done (2026-10-21)                              |
-| 2   | Design          | [Architecture](02-architecture.md), [ADRs](decisions/)              | Every hard-to-reverse choice has an ADR           | ✅ Done (2026-10-21, v2 same day)                 |
-| 3   | Build           | Working software, milestone by milestone ([roadmap](03-roadmap.md)) | Each milestone's acceptance criteria pass         | 🟡 In progress (M0–M1 done, M2–M5 built, M6 next) |
-| 4   | Test            | Automated tests + manual test pass                                  | `pnpm check` green, test plan executed            | 🟡 Continuous                                     |
-| 5   | Release         | Marketplace + Open VSX listing, v0.1.0                              | Install from Marketplace works on a clean machine | ⬜ Not started                                    |
-| 6   | Operate & learn | Issues triaged, feedback, v0.2 plan                                 | 5 real users tried it, feedback logged            | ⬜ Not started                                    |
+| #   | Phase           | Output                                                              | Gate                                              | Status                                                |
+| --- | --------------- | ------------------------------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------- |
+| 0   | Discovery       | Market scan, chosen idea                                            | Clear gap we can fill                             | ✅ Done (2026-10-21)                                  |
+| 1   | Requirements    | [Product spec](01-product-spec.md)                                  | MVP scope and non-goals agreed                    | ✅ Done (2026-10-21)                                  |
+| 2   | Design          | [Architecture](02-architecture.md), [ADRs](decisions/)              | Every hard-to-reverse choice has an ADR           | ✅ Done (2026-10-21, v2 same day)                     |
+| 3   | Build           | Working software, milestone by milestone ([roadmap](03-roadmap.md)) | Each milestone's acceptance criteria pass         | 🟡 In progress (M0–M5 done, M6 started)               |
+| 4   | Test            | Automated tests + manual test pass                                  | `pnpm check` green, test plan executed            | 🟡 Continuous                                         |
+| 5   | Release         | Marketplace + Open VSX listing, v0.1.0                              | Install from Marketplace works on a clean machine | 🟡 Started (v0.0.1 pre-release on GitHub, 2026-10-22) |
+| 6   | Operate & learn | Issues triaged, feedback, v0.2 plan                                 | 5 real users tried it, feedback logged            | ⬜ Not started                                        |
 
 ---
 

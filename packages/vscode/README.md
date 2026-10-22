@@ -2,7 +2,7 @@
 
 **The API client that reads your code.**
 
-> Pre-alpha. Not on the Marketplace yet.
+> Pre-alpha. Not on the Marketplace yet. Install the [v0.0.1 pre-release](https://github.com/harshdazz/routelens/releases/tag/v0.0.1) from GitHub.
 
 ## Features (today)
 

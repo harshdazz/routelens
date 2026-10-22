@@ -17,7 +17,7 @@
 
 RouteLens is a VS Code extension for Next.js and Express developers. It finds your API, writes a request for every route from your code and your zod schemas, runs them for you, and shows the result right above the handler. It also lets the AI agent you already use (Copilot, Claude Code, Cursor) test your API and fix what's broken.
 
-> **Status: pre-alpha.** Milestones M0–M5 are built and tested: core client, zero setup, reads your code, autopilot, and AI agents through MCP. It is not on the VS Code Marketplace yet; that is the v0.1 launch (M6). You can [try it from source](#try-it-from-source) today.
+> **Status: pre-alpha.** Milestones M0–M5 are built and tested: core client, zero setup, reads your code, autopilot, and AI agents through MCP. It is not on the VS Code Marketplace yet; that is the v0.1 launch (M6). Today you can install the [v0.0.1 pre-release](https://github.com/harshdazz/routelens/releases/tag/v0.0.1) (download the `.vsix`, then **Install from VSIX...** in the Extensions view) or [try it from source](#try-it-from-source).
 
 ---
 
