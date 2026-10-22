@@ -17,7 +17,22 @@
 
 RouteLens is a VS Code extension for Next.js and Express developers. It finds your API, writes a request for every route from your code and your zod schemas, runs them for you, and shows the result right above the handler. It also lets the AI agent you already use (Copilot, Claude Code, Cursor) test your API and fix what's broken.
 
-> **Status: pre-alpha.** Milestones M0–M5 are built and tested: core client, zero setup, reads your code, autopilot, and AI agents through MCP. It is not on the VS Code Marketplace yet; that is the v0.1 launch (M6). Today you can install the [v0.0.1 pre-release](https://github.com/harshdazz/routelens/releases/tag/v0.0.1) (download the `.vsix`, then **Install from VSIX...** in the Extensions view) or [try it from source](#try-it-from-source).
+> **Status: pre-alpha.** Milestones M0–M5 are built and tested: core client, zero setup, reads your code, autopilot, and AI agents through MCP. It is not on the VS Code Marketplace yet; that is the v0.1 launch (M6). Today you can install the `.vsix` from [GitHub Releases](https://github.com/harshdazz/routelens/releases) (see [Quick start](#quick-start)) or [try it from source](#try-it-from-source).
+
+<p align="center">
+  <img src="docs/images/demo.gif" alt="RouteLens in VS Code on a small todo API: it finds the API and its 6 routes, offers to start the server when ▶ Send is clicked, shows 200 OK above the handler, runs every route with one click (5 pass, 1 fails with a 404), offers to connect an AI agent, and after a one-line fix all 6 routes pass." width="100%">
+</p>
+<p align="center"><sub>Recorded in VS Code on <a href="fixtures/buggy-api"><code>fixtures/buggy-api</code></a> by <code>pnpm demo:record</code>, which drives a real VS Code with Playwright.</sub></p>
+
+## Quick start
+
+1. **Install.** Download `routelens-<version>.vsix` from [GitHub Releases](https://github.com/harshdazz/routelens/releases). In VS Code, open the Extensions view, click **`...`** at the top, choose **Install from VSIX...** and pick the file. You need VS Code 1.95 or newer.
+2. **Open your API project** (Next.js or Express). RouteLens finds your server's address and every route, and creates `.routelens/` with a request for each route.
+3. **Click ▶ Send** above a route handler. If your server is off, click **▶ Start server**.
+4. **Click ▶▶ Test everything** at the top of the RouteLens sidebar to run every route at once.
+5. **Optional:** run **RouteLens: Connect an AI Agent** and ask your agent _"Test my API and fix what's broken"_.
+
+No API at hand? Clone this repository, run `npm ci` in [`fixtures/buggy-api`](fixtures/buggy-api) and open that folder: it is the todo API from the demo, bug included.
 
 ---
 
@@ -49,6 +64,8 @@ Open a JavaScript project: Next.js, Vite, Express, NestJS or a monorepo. RouteLe
 
 A **Routes** sidebar lists every API route in your Next.js (App Router and `pages/api`) or Express project, including routers mounted across files. A **▶ Send** button sits above each handler, with the last result next to it: `✓ 201 Created · 14 ms`. Each route gets a request file with a sample body built from its zod schema. When you change the route, its request follows, and anything you edited is kept. RouteLens reads your code with the TypeScript parser and **never runs it**.
 
+![The Routes sidebar lists the routes of a todo API. Above the GET /api/todos handler the result reads ✓ 200 OK, the response panel beside it shows the JSON body, and the terminal below shows the dev server RouteLens started.](docs/images/demo-send.png)
+
 ### 3. Autopilot
 
 - **Test everything:** one click runs every request and flow (reads first, deletes last) and shows a health board: `12 passed · 2 failed`.
@@ -56,6 +73,8 @@ A **Routes** sidebar lists every API route in your Next.js (App Router and `page
 - **Checks:** a request passes when its status is below 400, or when the response matches its `expect` block.
 - **Flows:** a `.flow.json` file runs requests in order and passes values on ("create a post, then read it back"). Plain code replays it; no AI.
 - **Logs in by itself:** when a route answers 401, RouteLens finds your login route, asks for your login once (kept in the OS keychain, never in files) and reuses the token.
+
+![After Test everything the Routes sidebar reads 5 passed · 1 failed, and ✗ 404 Not Found sits above the GET /api/todos/:id handler, right above the buggy line.](docs/images/demo-test-everything.png)
 
 ### 4. The same tests in CI
 
@@ -71,6 +90,8 @@ RouteLens ships an [MCP](https://modelcontextprotocol.io) server with 7 tools: `
 
 - **Copilot agent mode** (VS Code 1.101+): nothing to set up.
 - **Claude Code and Cursor:** one click with **RouteLens: Connect an AI Agent**.
+
+![RouteLens: Connect an AI Agent offers Claude Code, Cursor, Copilot agent mode (already connected) and a copyable MCP config for any other agent.](docs/images/demo-ai-agent.png)
 
 The guard rails stay on whatever the AI decides: requests only go to this machine or to hosts in your environment files, and writes to other hosts need your OK. Read more in [Using RouteLens with AI agents](docs/using-with-ai-agents.md).
 
@@ -182,7 +203,7 @@ fixtures/         small projects for the detection, scanner and acceptance tests
 docs/             lifecycle plan, product spec, architecture, roadmap, decisions (ADRs)
 ```
 
-**Tech:** TypeScript (strict), pnpm workspaces, zod, the TypeScript compiler API (parser only), Node's fetch, esbuild, Vitest, `@vscode/test-electron`, `@modelcontextprotocol/sdk`.
+**Tech:** TypeScript (strict), pnpm workspaces, zod, the TypeScript compiler API (parser only), Node's fetch, esbuild, Vitest, `@vscode/test-electron`, `@modelcontextprotocol/sdk`, Playwright (demo recording).
 
 **Tests:** about 380 unit and integration tests, 17 end-to-end tests in a real VS Code, and acceptance checks on fresh installs of real fixture projects (run by hand). CI runs the unit, integration and end-to-end tests on every push and pull request, plus the CLI against the demo server.
 
@@ -193,20 +214,21 @@ docs/             lifecycle plan, product spec, architecture, roadmap, decisions
 - **Requests that follow the code without losing edits:** each value RouteLens writes carries a fingerprint, so it updates only what you haven't changed.
 - **One runner, three front ends:** the editor, the CLI and the MCP server share the same checks, flows and auto-login ([ADR-0008](docs/decisions/0008-autopilot-runner-flows-login.md)).
 - **Safe AI tooling:** every outgoing request passes a guard that the agent can't turn off, and writes to other machines ask the person through MCP elicitation ([ADR-0009](docs/decisions/0009-mcp-server-for-ai-agents.md)).
+- **Releases and the demo are code:** a version tag runs CI, packages everything and waits for approval before publishing with npm and Open VSX trusted publishing ([ADR-0010](docs/decisions/0010-release-and-distribution.md)). The demo above is recorded by a script that drives a real VS Code with Playwright.
 
 ## Roadmap
 
-| Milestone                   | Status                                    |
-| --------------------------- | ----------------------------------------- |
-| M0 Foundation               | ✅ done                                   |
-| M1 Core client              | ✅ done                                   |
-| M2 Zero setup               | ✅ done                                   |
-| M3 Reads your code          | ✅ done                                   |
-| M4 Autopilot                | ✅ done (tried by hand, green in CI)      |
-| M5 Works with your AI agent | ✅ done (Claude Code and Copilot checked) |
-| M6 Launch v0.1              | ⏳ next: Marketplace, Open VSX, npm, demo |
-| M7 Built-in AI brain (v0.2) | planned                                   |
-| M8 Essentials (v0.3)        | planned                                   |
+| Milestone                   | Status                                                                          |
+| --------------------------- | ------------------------------------------------------------------------------- |
+| M0 Foundation               | ✅ done                                                                         |
+| M1 Core client              | ✅ done                                                                         |
+| M2 Zero setup               | ✅ done                                                                         |
+| M3 Reads your code          | ✅ done                                                                         |
+| M4 Autopilot                | ✅ done (tried by hand, green in CI)                                            |
+| M5 Works with your AI agent | ✅ done (Claude Code and Copilot checked)                                       |
+| M6 Launch v0.1              | 🟡 in progress: release pipeline and demo done; Marketplace, Open VSX, npm next |
+| M7 Built-in AI brain (v0.2) | planned                                                                         |
+| M8 Essentials (v0.3)        | planned                                                                         |
 
 Details and dates are in the [roadmap](docs/03-roadmap.md).
 

@@ -18,7 +18,8 @@
     "demo-server": "node examples/demo-server.mjs",
     "test:e2e": "pnpm --filter routelens test:e2e",
     "test:acceptance": "pnpm --filter routelens test:acceptance",
-    "test:acceptance:mcp": "pnpm --filter @routelens/mcp test:acceptance"
+    "test:acceptance:mcp": "pnpm --filter @routelens/mcp test:acceptance",
+    "demo:record": "pnpm --filter routelens demo"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

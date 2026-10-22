@@ -122,7 +122,7 @@ Details decided while building (fingerprints in the `route` field, renames, dele
 - [x] npm-ready `@routelens/cli` and `@routelens/mcp`: public, one bundled file each, checked with `npm pack` and a clean install
 - [x] Release workflow: tag `vX.Y.Z` → the same checks as CI → Harsh approves → npm and Open VSX (trusted publishing), Marketplace, GitHub Release. The package job's steps were run locally; the publish job runs for the first time with v0.1.0
 - [ ] Setup (Harsh, [Releasing](releasing.md)): the `release` environment with a required reviewer, Marketplace publisher `harshdazz`, Open VSX namespace `harshdazz`, npm organization `routelens`; first npm publish by hand, then trusted publishing for npm and Open VSX
-- [ ] README with demo GIF (install → click Send → autopilot → AI agent fixes a bug), screenshots, quick start
+- [x] README with demo GIF, screenshots and a quick start (2026-10-23). `pnpm demo:record` records them in a real VS Code with the packaged `.vsix` on `fixtures/buggy-api`: zero setup → ▶ Send starts the server → Test everything (5 passed, 1 failed) → Connect an AI Agent → the one-line fix → 6 passed. The fix in the GIF is typed by the script; real agent runs are in M5's acceptance note
 - [ ] v0.1.0 published on the Marketplace, Open VSX and npm; install from the Marketplace works on a clean machine
 - [ ] Landing page (Next.js) with the demo
 - [ ] LinkedIn launch post + GitHub repo polish (topics, description, pinned)

@@ -2,7 +2,16 @@
 
 **The API client that reads your code.**
 
-> Pre-alpha. Not on the Marketplace yet. Install the [v0.0.1 pre-release](https://github.com/harshdazz/routelens/releases/tag/v0.0.1) from GitHub.
+> Pre-alpha. Not on the Marketplace yet. Install the `.vsix` from [GitHub Releases](https://github.com/harshdazz/routelens/releases).
+
+![RouteLens finds a todo API and its 6 routes, starts the server on ▶ Send, runs every route with one click (5 pass, 1 fails with a 404), offers to connect an AI agent, and after a one-line fix all 6 routes pass.](https://raw.githubusercontent.com/harshdazz/routelens/main/docs/images/demo.gif)
+
+## Quick start
+
+1. Open your API project (Next.js or Express). RouteLens finds your server's address and every route, and creates `.routelens/` with a request for each route.
+2. Click **▶ Send** above a route handler. If your server is off, click **▶ Start server**.
+3. Click **▶▶ Test everything** at the top of the RouteLens sidebar to run every route at once.
+4. Optional: run **RouteLens: Connect an AI Agent** and ask your agent _"Test my API and fix what's broken"_.
 
 ## Features (today)
 

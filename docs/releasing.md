@@ -85,6 +85,17 @@ If a step fails, fix the cause and choose **Re-run failed jobs**. Every publish 
 
 The workflow stops before anything is published if a version differs from the tag, or if the CHANGELOG section has no date.
 
+## The demo GIF and screenshots
+
+`docs/images/demo.gif` and the three `demo-*.png` screenshots in the README are recorded by a script that drives a real VS Code with Playwright, on a fresh copy of `fixtures/buggy-api` with the packaged extension. Record them again when the UI they show changes:
+
+```bash
+pnpm --filter routelens package
+pnpm demo:record
+```
+
+It needs port 3456 free, and the internet the first time (VS Code and `npm ci`). The script is `packages/vscode/scripts/demo.mjs`; the captions and timings are at the top.
+
 ## The icon
 
 `packages/vscode/media/icon.png` is `media/icon.svg` rendered at 256×256 with headless Chrome:

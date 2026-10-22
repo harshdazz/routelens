@@ -454,7 +454,8 @@
     "vscode:prepublish": "node esbuild.mjs && node scripts/copy-changelog.mjs",
     "package": "vsce package --no-dependencies",
     "test:e2e": "node esbuild.mjs && tsc -p tsconfig.e2e.json && node test/e2e/runTest.mjs extension",
-    "test:acceptance": "node esbuild.mjs && tsc -p tsconfig.e2e.json && node test/e2e/runTest.mjs acceptance"
+    "test:acceptance": "node esbuild.mjs && tsc -p tsconfig.e2e.json && node test/e2e/runTest.mjs acceptance",
+    "demo": "node scripts/demo.mjs"
   },
   "dependencies": {
     "@routelens/core": "workspace:*"
@@ -465,6 +466,9 @@
     "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^4.0.0",
     "esbuild": "^0.28.2",
-    "mocha": "^11.8.0"
+    "gifenc": "^1.0.3",
+    "mocha": "^11.8.0",
+    "playwright-core": "^1.64.1",
+    "pngjs": "^7.0.0"
   }
 }
