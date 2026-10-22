@@ -1,6 +1,8 @@
 node_modules/
 dist/
 *.vsix
+# Copied from the root CHANGELOG.md when the extension is packaged
+packages/vscode/CHANGELOG.md
 *.log
 .vscode-test/
 coverage/

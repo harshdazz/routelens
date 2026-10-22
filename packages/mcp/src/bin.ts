@@ -1,11 +1,11 @@
 import { parseArgs } from "node:util";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { version as VERSION } from "../package.json";
 import { createServer } from "./server.js";
 
 // The `routelens-mcp` command: an MCP server on stdin/stdout (ADR-0009). Agents start it
 // themselves; stdout belongs to the protocol, so messages for people go to stderr.
 
-const VERSION = "0.0.0";
 const USAGE = `Usage: routelens-mcp [options]
 
 An MCP server that lets AI agents (Claude Code, Cursor, Copilot) list this project's API

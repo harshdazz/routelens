@@ -2,7 +2,10 @@
 !dist/extension.js
 !dist/mcp-server.js
 !schemas/**
-!media/**
+!media/routelens.svg
+!media/icon.png
+!media/walkthrough/**
 !package.json
 !README.md
+!CHANGELOG.md
 !LICENSE

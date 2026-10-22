@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <!-- Marketplace icon source. media/icon.png is this file rendered at 256x256 (see docs/releasing.md). -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1e293b"/>
+      <stop offset="1" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbbf24"/>
+      <stop offset="1" stop-color="#f97316"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="url(#bg)"/>
+  <!-- Routes: the lines the lens reads. -->
+  <g stroke="#334155" stroke-width="12" stroke-linecap="round">
+    <path d="M150 64h66"/>
+    <path d="M186 104h30"/>
+    <path d="M40 200h84"/>
+  </g>
+  <circle cx="108" cy="108" r="62" fill="#0f172a" stroke="url(#ring)" stroke-width="18"/>
+  <path d="M154 154l52 52" stroke="#f97316" stroke-width="26" stroke-linecap="round"/>
+  <!-- A passing route. -->
+  <path d="M80 110l20 20 38-42" fill="none" stroke="#5eead4" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,121 @@
+name: Release
+
+# Publishes RouteLens when a version tag such as v0.1.0 is pushed (ADR-0010, docs/releasing.md).
+# 1. ci: the same checks as every push, on the tagged commit.
+# 2. package: the .vsix, the two npm packages and the release notes.
+# 3. publish: waits for approval in the `release` environment, then npm, Open VSX, the VS Code
+#    Marketplace and the GitHub Release. Each step skips what is already published, so a failed
+#    run can be re-run. A channel that is not set up yet is skipped with a warning.
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  package:
+    needs: ci
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # `vsce package` builds the extension itself (vscode:prepublish). The npm packages are
+      # built here; `pnpm pack` turns their workspace: links into versions.
+      - run: pnpm --filter @routelens/cli --filter @routelens/mcp build
+      - run: pnpm --filter routelens package
+      - run: mkdir release && mv packages/vscode/routelens-*.vsix release/
+      - run: pnpm --filter @routelens/cli --filter @routelens/mcp exec pnpm pack --pack-destination "$GITHUB_WORKSPACE/release"
+      # Stops the release if a package's version differs from the tag, or the CHANGELOG
+      # section for this version has no date.
+      - run: node scripts/release-notes.mjs "$GITHUB_REF_NAME" release/routelens-*.vsix > release-notes.md
+      - run: ls -l release && cat release-notes.md
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release
+          path: |
+            release/
+            release-notes.md
+          if-no-files-found: error
+
+  publish:
+    needs: package
+    runs-on: ubuntu-latest
+    # The environment's required reviewer (Harsh) must approve before any step below runs.
+    environment: release
+    permissions:
+      contents: write # create the GitHub Release
+      id-token: write # npm and Open VSX trusted publishing: short-lived tokens, nothing stored
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: release
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - name: Channels that are set up
+        id: channels
+        env:
+          NPM: ${{ vars.NPM_TRUSTED_PUBLISHING == 'true' }}
+          OVSX: ${{ vars.OVSX_TRUSTED_PUBLISHING == 'true' }}
+          VSCE: ${{ secrets.VSCE_PAT != '' }}
+        run: |
+          {
+            echo "npm=$NPM"
+            echo "ovsx=$OVSX"
+            echo "vsce=$VSCE"
+          } >> "$GITHUB_OUTPUT"
+          if [ "$NPM" != true ]; then
+            echo "::warning::npm skipped: set the repository variable NPM_TRUSTED_PUBLISHING to true once trusted publishing is set up (docs/releasing.md)."
+          fi
+          if [ "$OVSX" != true ]; then
+            echo "::warning::Open VSX skipped: set the repository variable OVSX_TRUSTED_PUBLISHING to true once trusted publishing is set up (docs/releasing.md)."
+          fi
+          if [ "$VSCE" != true ]; then
+            echo "::warning::VS Code Marketplace skipped: upload the .vsix from this release at https://marketplace.visualstudio.com/manage/publishers/harshdazz"
+          fi
+      - name: npm
+        if: steps.channels.outputs.npm == 'true'
+        run: |
+          # Trusted publishing needs npm 11.5.1 or newer.
+          npm install --global npm@11
+          for tarball in release/*.tgz; do
+            name=$(tar -xzOf "$tarball" package/package.json | jq -r '.name + "@" + .version')
+            if npm view "$name" version > /dev/null 2>&1; then
+              echo "$name is already on npm"
+            else
+              npm publish "$tarball" --access public --provenance
+            fi
+          done
+      - name: Open VSX
+        if: steps.channels.outputs.ovsx == 'true'
+        run: npx --yes ovsx@1.3.0 publish --packagePath release/*.vsix --trusted-publishing --skip-duplicate
+      - name: VS Code Marketplace
+        if: steps.channels.outputs.vsce == 'true'
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: npx --yes @vscode/vsce@4.0.0 publish --packagePath release/*.vsix --skip-duplicate
+      - name: GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "$GITHUB_REF_NAME is already on GitHub Releases"
+          else
+            gh release create "$GITHUB_REF_NAME" release/*.vsix --repo "$GITHUB_REPOSITORY" \
+              --verify-tag --title "RouteLens $GITHUB_REF_NAME" --notes-file release-notes.md
+          fi

@@ -114,9 +114,16 @@ Details decided while building (fingerprints in the `route` field, renames, dele
 
 ## M6 — Launch v0.1 🟡 (target 2026-11-25)
 
+[ADR-0010](decisions/0010-release-and-distribution.md) · [Releasing](releasing.md)
+
 - [x] Pre-release [v0.0.1 on GitHub](https://github.com/harshdazz/routelens/releases/tag/v0.0.1) with the `.vsix` (2026-10-22): built from `b5ca275` after `pnpm check`, installed cleanly into a separate VS Code folder, and downloaded again after upload with the same SHA-256
+- [x] Decisions: keep the name RouteLens (other projects use it too), channels, one version for everything, release workflow with an approval step (ADR-0010)
+- [x] Marketplace-ready `.vsix`: PNG icon, gallery metadata, CHANGELOG inside, and packaging always builds first (`vscode:prepublish`)
+- [x] npm-ready `@routelens/cli` and `@routelens/mcp`: public, one bundled file each, checked with `npm pack` and a clean install
+- [x] Release workflow: tag `vX.Y.Z` → the same checks as CI → Harsh approves → npm and Open VSX (trusted publishing), Marketplace, GitHub Release. The package job's steps were run locally; the publish job runs for the first time with v0.1.0
+- [ ] Setup (Harsh, [Releasing](releasing.md)): the `release` environment with a required reviewer, Marketplace publisher `harshdazz`, Open VSX namespace `harshdazz`, npm organization `routelens`; first npm publish by hand, then trusted publishing for npm and Open VSX
 - [ ] README with demo GIF (install → click Send → autopilot → AI agent fixes a bug), screenshots, quick start
-- [ ] Marketplace + Open VSX publish, v0.1.0, CHANGELOG
+- [ ] v0.1.0 published on the Marketplace, Open VSX and npm; install from the Marketplace works on a clean machine
 - [ ] Landing page (Next.js) with the demo
 - [ ] LinkedIn launch post + GitHub repo polish (topics, description, pinned)
 - [ ] Get 5 real users to try it; log feedback

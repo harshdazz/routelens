@@ -217,6 +217,7 @@ Details and dates are in the [roadmap](docs/03-roadmap.md).
 - [Architecture](docs/02-architecture.md)
 - [Roadmap](docs/03-roadmap.md)
 - [Engineering lifecycle plan](docs/00-lifecycle-plan.md)
+- [Releasing](docs/releasing.md)
 - [Architecture decisions (ADRs)](docs/decisions/)
 
 ## Contributing

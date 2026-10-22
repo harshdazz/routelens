@@ -24,10 +24,11 @@ import {
   type CheckResult,
   type RequestRun,
 } from "@routelens/core";
+import { version } from "../package.json";
 import { startDevServer, type DevServer } from "./devServer.js";
 import { toJUnit, type FlowResult, type RequestResult } from "./junit.js";
 
-export const VERSION = "0.0.0";
+export const VERSION = version;
 
 /** Where the CLI reads and writes, so tests can run it in-process. */
 export interface Io {

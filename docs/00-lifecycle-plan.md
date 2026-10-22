@@ -79,8 +79,8 @@ Rules: CI never calls a live AI model or the public internet. Tests use local se
 
 - Versioning: SemVer. `0.x` while pre-1.0. Keep a `CHANGELOG.md` from the first release.
 - Release plan: v0.1.0 at M6 (zero setup, reads your code, autopilot, MCP), v0.2 adds the built-in AI brain (M7), v0.3 adds the manual essentials (M8).
-- Package with `@vscode/vsce`, publish to the VS Code Marketplace (publisher account needed) and Open VSX (for Cursor/VSCodium users).
-- Release checklist: version bump → changelog → `pnpm check` → package `.vsix` → install the `.vsix` on a clean VS Code profile → publish → GitHub release with notes.
+- Package with `@vscode/vsce`, publish to the VS Code Marketplace (publisher account needed) and Open VSX (for Cursor/VSCodium users). The CLI and the MCP server go to npm as `@routelens/cli` and `@routelens/mcp` ([ADR-0010](decisions/0010-release-and-distribution.md)).
+- Release checklist ([Releasing](releasing.md)): changelog date → version bump in the three packages → `pnpm check` → push a `vX.Y.Z` tag → the release workflow runs CI, packages and waits for approval → npm, Open VSX, Marketplace, GitHub Release → install from the Marketplace on a clean VS Code profile.
 - Launch assets: README with demo GIF, short landing page (Next.js), LinkedIn launch post.
 
 ## Phase 6 — Operate & learn
