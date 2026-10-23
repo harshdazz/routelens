@@ -2,7 +2,7 @@
 
 **The API client that reads your code.**
 
-> Pre-alpha. Not on the Marketplace yet. Install the `.vsix` from [GitHub Releases](https://github.com/harshdazz/routelens/releases).
+> Preview: an early version. Bug reports and ideas are welcome in [GitHub issues](https://github.com/harshdazz/routelens/issues).
 
 ![RouteLens finds a todo API and its 6 routes, starts the server on ▶ Send, runs every route with one click (5 pass, 1 fails with a 404), offers to connect an AI agent, and after a one-line fix all 6 routes pass.](https://raw.githubusercontent.com/harshdazz/routelens/main/docs/images/demo.gif)
 

@@ -2,7 +2,7 @@
 
 The RouteLens MCP server: lets AI agents (Copilot agent mode, Claude Code, Cursor, any MCP client) list your API routes, run them, read what failed with the route's code, and save flows. It speaks MCP on stdio.
 
-> Pre-alpha. Not on npm yet: it is published with RouteLens v0.1 (M6). Until then, the VS Code extension sets agents up for you ("RouteLens: Connect an AI Agent"), or build it with `pnpm --filter @routelens/mcp build` and run `node packages/mcp/dist/routelens-mcp.cjs`.
+> Preview: an early version. Bug reports and ideas are welcome in [GitHub issues](https://github.com/harshdazz/routelens/issues). If you use VS Code, the extension sets agents up for you ("RouteLens: Connect an AI Agent").
 
 ```json
 {

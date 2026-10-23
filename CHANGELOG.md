@@ -6,7 +6,7 @@ RouteLens is released as one version: the VS Code extension, the CLI (`@routelen
 
 The first public release: on the VS Code Marketplace, Open VSX and npm.
 
-- **Install from the Marketplace** (or Open VSX for Cursor and VSCodium), with an icon and a proper listing.
+- **Install from the Marketplace** (or Open VSX for Cursor and VSCodium): search for **RouteLens API Client** by harshdazz. The listing has an icon, the demo and a quick start.
 - **The CLI on npm:** `npx @routelens/cli run` runs your requests and flows in the terminal and in CI.
 - **The MCP server on npm:** `npx -y @routelens/mcp` gives any AI agent RouteLens's tools, with no path to set up. The extension still sets up Copilot, Claude Code and Cursor for you.
 

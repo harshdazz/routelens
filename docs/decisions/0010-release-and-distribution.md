@@ -25,7 +25,7 @@ What was found on 2026-10-22:
 
 ## Decision
 
-**Keep the name RouteLens** (Harsh, 2026-10-22). The extension ID `harshdazz.routelens` is unique because it includes the publisher. The Marketplace description says what RouteLens does differently (it writes and runs the requests, and AI agents can use it), so the two listings are easy to tell apart. If the Marketplace refuses the display name, the fallback is "RouteLens API Client".
+**Keep the name RouteLens** (Harsh, 2026-10-22). The extension ID `harshdazz.routelens` is unique because it includes the publisher. The Marketplace description says what RouteLens does differently (it writes and runs the requests, and AI agents can use it), so the two listings are easy to tell apart. If the Marketplace refuses the display name, the fallback is "RouteLens API Client". Harsh chose the fallback on 2026-10-23, before the first upload (see Consequences).
 
 **Channels:**
 
@@ -81,6 +81,7 @@ Found during the account setup on 2026-10-23:
 - **npm staged publishing:** the hand publish of each new package first created a public `0.0.0-stage` placeholder, and 0.0.1 went live a few minutes later. The placeholders stay in the version lists. In npm's trusted-publisher form, **Allow npm publish** must be ticked, because the workflow runs `npm publish`. The form's fields can't be edited later.
 - **The environment name** must be exactly `release`, lowercase, to match the trusted-publisher settings on npm and Open VSX. GitHub can't rename an environment, so a wrong name means deleting it and creating it again.
 - **The first Marketplace upload** is **New extension → Visual Studio Code** on the publisher page. **⋯ → Update** is for later versions.
+- **The display name is "RouteLens API Client".** The Marketplace refuses a new extension whose display name is too close to an existing one, to stop look-alike extensions ("Similar extension display name … already exists"). `DharanishAM.routelens` is already called "RouteLens", so the same name would almost certainly be refused, and that would only show at the hand upload, after npm and the GitHub Release are out. The extension ID stays `harshdazz.routelens`, and everything else is still called RouteLens. Whether the new name passes is only known at the first upload: it shares "RouteLens API" with "RouteLens API Route Navigator".
 - After 2026-12-01 the Marketplace step needs Entra ID (`azure/login` with OIDC, then `vsce publish --azure-credential`), or the hand upload. That is a follow-up.
 - The `.vsix` still contains TypeScript twice (`extension.js` and `mcp-server.js`, about 4 MB each before compression; the `.vsix` is 2.4 MB). Sharing one copy would mean copying two files to global storage for Claude Code and Cursor. That is not worth the risk for v0.1. It is revisited if the size becomes a problem.
 - The CHANGELOG is written by hand, one section per version, in plain English.

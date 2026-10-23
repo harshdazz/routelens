@@ -2,7 +2,7 @@
 
 Run your RouteLens requests and flows from the terminal and in CI, with the same runner as the VS Code extension. Plain code, no AI.
 
-> Pre-alpha. Not on npm yet: it is published with RouteLens v0.1 (M6). Until then, build it from this repository with `pnpm --filter @routelens/cli build` and run `node packages/cli/dist/cli.js`.
+> Preview: an early version. Bug reports and ideas are welcome in [GitHub issues](https://github.com/harshdazz/routelens/issues).
 
 ```bash
 npx @routelens/cli run                      # the project in the current folder

@@ -44,7 +44,7 @@ process.stdout.write(`${body.join("\n").trim()}
 
 ## Install
 
-Search for **RouteLens** by harshdazz in the VS Code Extensions view. Or download \`${vsix}\` below, open the Extensions view's **\`...\`** menu and choose **Install from VSIX...**. You need VS Code 1.95 or newer.
+Search for **RouteLens API Client** by harshdazz in the VS Code Extensions view. Or download \`${vsix}\` below, open the Extensions view's **\`...\`** menu and choose **Install from VSIX...**. You need VS Code 1.95 or newer.
 
 The CLI and the MCP server are on npm: \`npx @routelens/cli run\` and \`npx -y @routelens/mcp\`.
 
