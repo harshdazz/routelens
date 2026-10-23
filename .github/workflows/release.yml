@@ -36,12 +36,12 @@ jobs:
       # `vsce package` builds the extension itself (vscode:prepublish). The npm packages are
       # built here; `pnpm pack` turns their workspace: links into versions.
       - run: pnpm --filter @routelens/cli --filter @routelens/mcp build
-      - run: pnpm --filter routelens package
-      - run: mkdir release && mv packages/vscode/routelens-*.vsix release/
+      - run: pnpm --filter routelens-api-client package
+      - run: mkdir release && mv packages/vscode/routelens-api-client-*.vsix release/
       - run: pnpm --filter @routelens/cli --filter @routelens/mcp exec pnpm pack --pack-destination "$GITHUB_WORKSPACE/release"
       # Stops the release if a package's version differs from the tag, or the CHANGELOG
       # section for this version has no date.
-      - run: node scripts/release-notes.mjs "$GITHUB_REF_NAME" release/routelens-*.vsix > release-notes.md
+      - run: node scripts/release-notes.mjs "$GITHUB_REF_NAME" release/routelens-api-client-*.vsix > release-notes.md
       - run: ls -l release && cat release-notes.md
       - uses: actions/upload-artifact@v7
         with:

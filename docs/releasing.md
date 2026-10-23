@@ -2,7 +2,7 @@
 
 How a version gets from `main` to the VS Code Marketplace, Open VSX, npm and GitHub Releases. Why it works this way: [ADR-0010](decisions/0010-release-and-distribution.md).
 
-The short version: update the CHANGELOG and the versions, push a tag, approve the release in GitHub Actions, then upload by hand what the workflow skipped.
+The short version: update the CHANGELOG and the versions, push a tag, upload the `.vsix` to the Marketplace while the run waits, approve the run in GitHub Actions, then publish to Open VSX by hand.
 
 ## One-time setup
 
@@ -21,8 +21,11 @@ If the environment doesn't exist, GitHub creates it on the first release **witho
 ### 2. VS Code Marketplace
 
 1. Sign in at [marketplace.visualstudio.com/manage](https://marketplace.visualstudio.com/manage) with your Microsoft account and choose **Create publisher**. **ID:** `harshdazz` (it must match `publisher` in `packages/vscode/package.json` and can't be changed later). **Name:** Harsh Dubey.
+
+   The extension's `name` in `packages/vscode/package.json` must be unused on the whole Marketplace, not only under your publisher. `routelens` belongs to another extension, so the name is `routelens-api-client` and the ID is `harshdazz.routelens-api-client`. The display name must not be too close to another extension's either.
+
 2. Pick one way to publish:
-   - **By hand (no secret):** after each release, download the `.vsix` from the GitHub Release and upload it on the publisher page. The first time, choose **New extension → Visual Studio Code**. For later versions, choose **⋯ → Update** on RouteLens. The workflow reminds you with a warning.
+   - **By hand (no secret):** during each release, while the run waits for approval, upload the `.vsix` from the run's artifact on the publisher page (see [Each release](#each-release)). The first time, choose **New extension → Visual Studio Code**. For later versions, choose **⋯ → Update** on RouteLens API Client. The workflow reminds you with a warning.
    - **Token (works until 2026-12-01):** in Azure DevOps create a personal access token with **Organization: All accessible organizations** and the scope **Marketplace → Manage**. Save it as the repository secret `VSCE_PAT` (Settings → Secrets and variables → Actions → Secrets). Azure DevOps stops accepting these tokens on 2026-12-01; after that, use the hand upload until publishing moves to Microsoft Entra ID.
 
 ### 3. Open VSX (for Cursor, VSCodium and other editors)
@@ -74,7 +77,7 @@ After the first version is on Open VSX and on the Marketplace:
 2. **Versions:** the extension, the CLI and the MCP server always share one version.
 
    ```bash
-   pnpm --filter routelens --filter @routelens/cli --filter @routelens/mcp exec npm pkg set version=X.Y.Z
+   pnpm --filter routelens-api-client --filter @routelens/cli --filter @routelens/mcp exec npm pkg set version=X.Y.Z
    ```
 
 3. **Check and commit:** `pnpm check`, commit as `chore: release vX.Y.Z`, push, and wait for CI to pass.
@@ -85,16 +88,20 @@ After the first version is on Open VSX and on the Marketplace:
    git push origin vX.Y.Z
    ```
 
-5. **Approve:** GitHub → Actions → the **Release** run. After the checks and the packaging, it waits on **Review deployments**. Read the release notes the package job printed, then approve.
-6. **Upload by hand** what the run skipped with a warning. Download the `.vsix` from the GitHub Release first.
-   - **Marketplace** (no `VSCE_PAT`): on the [publisher page](https://marketplace.visualstudio.com/manage/publishers/harshdazz), the first version goes in with **New extension → Visual Studio Code**, later versions with **⋯ → Update** on RouteLens.
-   - **Open VSX** (until `OVSX_TRUSTED_PUBLISHING` is on): create an access token on open-vsx.org (**Settings → Access Tokens**), publish, then delete the token:
+5. **Marketplace first, then approve.** GitHub → Actions → the **Release** run. After the checks and the packaging, it waits on **Review deployments**. Nothing is public yet. Read the release notes the package job printed.
 
-     ```bash
-     npx ovsx publish routelens-X.Y.Z.vsix -p <token>
-     ```
+   While the Marketplace is uploaded by hand (no `VSCE_PAT`), upload it now, before you approve, so a refusal stops the release before npm and the GitHub Release:
+   1. Download the run's **release** artifact (bottom of the run's page, or `gh run download <run id> --repo harshdazz/routelens --name release`) and take `release/routelens-api-client-X.Y.Z.vsix` from it.
+   2. Upload it on the [publisher page](https://marketplace.visualstudio.com/manage/publishers/harshdazz): the first version with **New extension → Visual Studio Code**, later versions with **⋯ → Update** on RouteLens API Client.
+   3. If the Marketplace accepts it, approve the run. npm and the GitHub Release then get the same file. If it refuses it, choose **Reject**. Nothing is published, so fix the cause, commit, and move the tag to the fixed commit (`git push origin :refs/tags/vX.Y.Z`, then `git tag -f vX.Y.Z` and push it again). Only move a tag that nothing was published from.
 
-     After the first version, finish the Open VSX setup (steps 4 to 6 above).
+6. **Open VSX by hand** (until `OVSX_TRUSTED_PUBLISHING` is on): with the same `.vsix`, create an access token on open-vsx.org (**Settings → Access Tokens**), publish, then delete the token:
+
+   ```bash
+   npx ovsx publish routelens-api-client-X.Y.Z.vsix -p <token>
+   ```
+
+   After the first version, finish the Open VSX setup (steps 4 to 6 above).
 
 7. **Check what was published:**
    - The Marketplace page (it can take a few minutes to appear) and the Open VSX page.
@@ -111,7 +118,7 @@ The workflow stops before anything is published if a version differs from the ta
 `docs/images/demo.gif` and the three `demo-*.png` screenshots in the README are recorded by a script that drives a real VS Code with Playwright, on a fresh copy of `fixtures/buggy-api` with the packaged extension. Record them again when the UI they show changes:
 
 ```bash
-pnpm --filter routelens package
+pnpm --filter routelens-api-client package
 pnpm demo:record
 ```
 

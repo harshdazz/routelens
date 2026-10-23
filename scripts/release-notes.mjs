@@ -5,7 +5,7 @@ import path from "node:path";
 // Release notes for a version tag (ADR-0010). Checks that the extension, the CLI and the MCP
 // server all have the tag's version and that CHANGELOG.md has a dated section for it, then
 // prints that section with the install steps and the .vsix's SHA-256.
-// Usage: node scripts/release-notes.mjs v0.1.0 release/routelens-0.1.0.vsix
+// Usage: node scripts/release-notes.mjs v0.1.1 release/routelens-api-client-0.1.1.vsix
 
 const [tag = "", vsixPath] = process.argv.slice(2);
 

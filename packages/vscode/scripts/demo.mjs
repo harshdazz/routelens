@@ -3,7 +3,7 @@
 // docs/images/demo.gif and three screenshots. Needs the internet once (VS Code, npm ci) and
 // port 3456 free.
 //
-//   pnpm --filter routelens package && pnpm demo:record
+//   pnpm --filter routelens-api-client package && pnpm demo:record
 import { execFileSync, execSync, spawn } from "node:child_process";
 import {
   cpSync,
@@ -31,8 +31,8 @@ const { PNG } = pngjs;
 const extensionDir = fileURLToPath(new URL("..", import.meta.url));
 const repoRoot = path.resolve(extensionDir, "..", "..");
 const imagesDir = path.join(repoRoot, "docs", "images");
-const { version } = JSON.parse(readFileSync(path.join(extensionDir, "package.json"), "utf8"));
-const vsix = path.join(extensionDir, `routelens-${version}.vsix`);
+const { name, version } = JSON.parse(readFileSync(path.join(extensionDir, "package.json"), "utf8"));
+const vsix = path.join(extensionDir, `${name}-${version}.vsix`);
 
 const WIDTH = 1100;
 const HEIGHT = 690;
@@ -350,7 +350,7 @@ function writeGif(frames, file) {
 async function main() {
   if (!existsSync(vsix)) {
     throw new Error(
-      `${path.basename(vsix)} is missing: run "pnpm --filter routelens package" first`,
+      `${path.basename(vsix)} is missing: run "pnpm --filter routelens-api-client package" first`,
     );
   }
   if (!(await waitForPortClosed(API_PORT))) throw new Error(`port ${API_PORT} is in use`);

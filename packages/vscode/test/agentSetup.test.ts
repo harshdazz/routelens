@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { claudeAddCommand, cursorInstallLink, mcpJson, mcpServerConfig } from "../src/agentSetup";
 
 const server =
-  "C:\\Users\\Ada\\AppData\\Roaming\\Code\\User\\globalStorage\\harshdazz.routelens\\mcp\\routelens-mcp.cjs";
+  "C:\\Users\\Ada\\AppData\\Roaming\\Code\\User\\globalStorage\\harshdazz.routelens-api-client\\mcp\\routelens-mcp.cjs";
 const root = "C:\\Users\\Ada\\My Projects\\todo api";
 
 describe("agent setup", () => {

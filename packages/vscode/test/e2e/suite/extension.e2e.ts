@@ -126,7 +126,7 @@ suite("RouteLens zero setup", () => {
   });
 
   test("activates in a folder that only has a package.json", async () => {
-    const extension = vscode.extensions.getExtension("harshdazz.routelens");
+    const extension = vscode.extensions.getExtension("harshdazz.routelens-api-client");
     assert.ok(extension, "extension is installed");
     await waitFor("activation", async () => extension.isActive || undefined);
   });
@@ -426,7 +426,7 @@ suite("RouteLens zero setup", () => {
   });
 
   test("the server VS Code registers for Copilot runs on VS Code's own Node.js", async () => {
-    const extension = vscode.extensions.getExtension("harshdazz.routelens");
+    const extension = vscode.extensions.getExtension("harshdazz.routelens-api-client");
     const bundled = path.join(extension?.extensionPath ?? "", "dist", "mcp-server.js");
     const routes = await listRoutesOverStdio(process.execPath, [bundled, "--root", workspace], {
       ELECTRON_RUN_AS_NODE: "1",

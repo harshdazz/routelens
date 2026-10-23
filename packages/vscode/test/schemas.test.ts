@@ -6,7 +6,7 @@ import { fileJsonSchemas } from "@routelens/core";
 // The JSON Schemas in ../schemas give users autocomplete in .req.json / .env.json /
 // .flow.json files.
 // They are generated from the zod schemas in core. If this test fails, run:
-//   UPDATE_SCHEMAS=1 pnpm --filter routelens test
+//   UPDATE_SCHEMAS=1 pnpm --filter routelens-api-client test
 const schemaFile = (name: string) => fileURLToPath(new URL(`../schemas/${name}`, import.meta.url));
 const format = (schema: unknown) => `${JSON.stringify(schema, null, 2)}\n`;
 

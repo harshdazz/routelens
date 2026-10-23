@@ -16,10 +16,10 @@
     "format:check": "prettier --check .",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "demo-server": "node examples/demo-server.mjs",
-    "test:e2e": "pnpm --filter routelens test:e2e",
-    "test:acceptance": "pnpm --filter routelens test:acceptance",
+    "test:e2e": "pnpm --filter routelens-api-client test:e2e",
+    "test:acceptance": "pnpm --filter routelens-api-client test:acceptance",
     "test:acceptance:mcp": "pnpm --filter @routelens/mcp test:acceptance",
-    "demo:record": "pnpm --filter routelens demo"
+    "demo:record": "pnpm --filter routelens-api-client demo"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -26,7 +26,7 @@ RouteLens is a VS Code extension for Next.js and Express developers. It finds yo
 
 ## Quick start
 
-1. **Install.** Download `routelens-<version>.vsix` from [GitHub Releases](https://github.com/harshdazz/routelens/releases). In VS Code, open the Extensions view, click **`...`** at the top, choose **Install from VSIX...** and pick the file. You need VS Code 1.95 or newer.
+1. **Install.** Download `routelens-api-client-<version>.vsix` from [GitHub Releases](https://github.com/harshdazz/routelens/releases). In VS Code, open the Extensions view, click **`...`** at the top, choose **Install from VSIX...** and pick the file. You need VS Code 1.95 or newer.
 2. **Open your API project** (Next.js or Express). RouteLens finds your server's address and every route, and creates `.routelens/` with a request for each route.
 3. **Click ▶ Send** above a route handler. If your server is off, click **▶ Start server**.
 4. **Click ▶▶ Test everything** at the top of the RouteLens sidebar to run every route at once.
@@ -170,8 +170,8 @@ pnpm check          # format, lint, typecheck, tests, build
 
 ```bash
 pnpm build
-pnpm --filter routelens package
-code --install-extension packages/vscode/routelens-0.0.1.vsix
+pnpm --filter routelens-api-client package
+code --install-extension packages/vscode/routelens-api-client-*.vsix
 ```
 
 **The CLI** (with the demo server running):
