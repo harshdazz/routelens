@@ -2,7 +2,7 @@
   "name": "routelens-api-client",
   "displayName": "RouteLens API Client",
   "description": "The API client that reads your code: it finds your Next.js and Express routes, writes and runs the requests, and lets your AI agent fix what fails.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "harshdazz",
   "license": "MIT",
   "author": "Harsh Dubey",

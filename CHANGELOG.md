@@ -2,11 +2,19 @@
 
 RouteLens is released as one version: the VS Code extension, the CLI (`@routelens/cli`) and the MCP server (`@routelens/mcp`) always share the same number. Each section below is also the text of that version's GitHub Release.
 
-## 0.1.0 (2026-10-23)
+## 0.1.1 (2026-10-23)
 
-The first public release: on the VS Code Marketplace, Open VSX and npm.
+The extension on the VS Code Marketplace and Open VSX.
 
 - **Install from the Marketplace** (or Open VSX for Cursor and VSCodium): search for **RouteLens API Client** by harshdazz. The listing has an icon, the demo and a quick start.
+- **New extension ID:** `harshdazz.routelens-api-client`. The Marketplace refused v0.1.0 because another extension already has the name `routelens`.
+- **If you installed the v0.0.1 pre-release** (`harshdazz.routelens`): VS Code sees the new ID as a different extension, so uninstall the old one. Your `.routelens/` files and `routelens.*` settings keep working. RouteLens asks once more for logins, the environment and starting your server, and request files you deleted for a route can come back once. If you use Claude Code or Cursor, run **RouteLens: Connect an AI Agent** again.
+- The CLI and the MCP server are unchanged since 0.1.0. They keep the extension's version number.
+
+## 0.1.0 (2026-10-23)
+
+The first public release, on npm and GitHub Releases. The Marketplace refused the extension's name, so the extension went there with 0.1.1.
+
 - **The CLI on npm:** `npx @routelens/cli run` runs your requests and flows in the terminal and in CI.
 - **The MCP server on npm:** `npx -y @routelens/mcp` gives any AI agent RouteLens's tools, with no path to set up. The extension still sets up Copilot, Claude Code and Cursor for you.
 
