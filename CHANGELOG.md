@@ -2,7 +2,7 @@
 
 RouteLens is released as one version: the VS Code extension, the CLI (`@routelens/cli`) and the MCP server (`@routelens/mcp`) always share the same number. Each section below is also the text of that version's GitHub Release.
 
-## 0.1.0 (not released yet)
+## 0.1.0 (2026-10-23)
 
 The first public release: on the VS Code Marketplace, Open VSX and npm.
 

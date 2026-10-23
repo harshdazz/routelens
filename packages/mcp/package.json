@@ -1,6 +1,6 @@
 {
   "name": "@routelens/mcp",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "RouteLens MCP server: lets AI agents list your API routes, run them and read failures.",
   "keywords": [
     "routelens",

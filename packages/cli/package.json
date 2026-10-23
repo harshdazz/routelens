@@ -1,6 +1,6 @@
 {
   "name": "@routelens/cli",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Run your RouteLens requests and flows from the command line and in CI: routelens run.",
   "keywords": [
     "routelens",
