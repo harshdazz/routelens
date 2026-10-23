@@ -93,7 +93,8 @@ jobs:
         run: |
           # Trusted publishing needs npm 11.5.1 or newer.
           npm install --global npm@11
-          for tarball in release/*.tgz; do
+          # The ./ matters: npm reads `release/x.tgz` as the GitHub repository user/repo.
+          for tarball in ./release/*.tgz; do
             name=$(tar -xzOf "$tarball" package/package.json | jq -r '.name + "@" + .version')
             if npm view "$name" version > /dev/null 2>&1; then
               echo "$name is already on npm"
