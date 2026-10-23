@@ -21,7 +21,7 @@ What was found on 2026-10-22:
 - **Open VSX:** no RouteLens. No `harshdazz` namespace yet.
 - **Marketplace rules:** `vsce` refuses an SVG icon and SVG images in the README and CHANGELOG (except badges from trusted providers). Global Azure DevOps personal access tokens (PATs) stop working on 2026-12-01. The replacement is Microsoft Entra ID (`vsce publish --azure-credential`), which needs an Azure managed identity.
 - **npm trusted publishing** (GitHub Actions signs in with OIDC, no token) can only be set up for a package that already exists. The first publish of each package is done by hand.
-- **Open VSX** has trusted publishing too (`ovsx publish --trusted-publishing`, ovsx 1.3.0). Creating the namespace still needs an access token once.
+- **Open VSX** has trusted publishing too (`ovsx publish --trusted-publishing`, ovsx 1.3.0). Creating the namespace needs an access token, and so does the first publish (see Consequences).
 
 ## Decision
 
@@ -71,8 +71,16 @@ What was found on 2026-10-22:
 
 ## Consequences
 
-- Before the first release Harsh creates: the `release` environment with himself as reviewer, the Marketplace publisher `harshdazz`, an Open VSX account and the `harshdazz` namespace, and the npm organization `routelens`. Then he publishes each npm package once by hand and turns on trusted publishing for npm and Open VSX. [Releasing](../releasing.md) lists the steps.
+- Before the first release Harsh creates: the `release` environment with himself as reviewer, the Marketplace publisher `harshdazz`, an Open VSX account and the `harshdazz` namespace, and the npm organization `routelens`. Then he publishes each npm package once by hand and turns on trusted publishing for npm. Open VSX trusted publishing comes after the first release (below). [Releasing](../releasing.md) lists the steps.
 - If the `release` environment doesn't exist, GitHub creates it without a reviewer on the first tag. So the environment comes first in the setup.
+
+Found during the account setup on 2026-10-23:
+
+- **Open VSX trusted publishing can't be set up before the first publish.** `ovsx create-namespace` makes the creator a contributor of the namespace, not its owner. The Open VSX server lets only an owner register a trusted publisher, and only for an extension that already exists. So claiming the namespace is required, not optional. v0.1.0 goes to Open VSX by hand with a short-lived token. Then Harsh claims the namespace (Option 1 of the "Claim namespace ownership" issue at EclipseFdn/open-vsx.org: a Marketplace publisher whose extension links to his own repository), adds the trusted publisher and sets `OVSX_TRUSTED_PUBLISHING`.
+- Setting `OVSX_TRUSTED_PUBLISHING` too early makes the Open VSX step fail, and the job stops before the Marketplace and GitHub Release steps. Until it is set, the workflow skips Open VSX with a warning.
+- **npm staged publishing:** the hand publish of each new package first created a public `0.0.0-stage` placeholder, and 0.0.1 went live a few minutes later. The placeholders stay in the version lists. In npm's trusted-publisher form, **Allow npm publish** must be ticked, because the workflow runs `npm publish`. The form's fields can't be edited later.
+- **The environment name** must be exactly `release`, lowercase, to match the trusted-publisher settings on npm and Open VSX. GitHub can't rename an environment, so a wrong name means deleting it and creating it again.
+- **The first Marketplace upload** is **New extension → Visual Studio Code** on the publisher page. **⋯ → Update** is for later versions.
 - After 2026-12-01 the Marketplace step needs Entra ID (`azure/login` with OIDC, then `vsce publish --azure-credential`), or the hand upload. That is a follow-up.
 - The `.vsix` still contains TypeScript twice (`extension.js` and `mcp-server.js`, about 4 MB each before compression; the `.vsix` is 2.4 MB). Sharing one copy would mean copying two files to global storage for Claude Code and Cursor. That is not worth the risk for v0.1. It is revisited if the size becomes a problem.
 - The CHANGELOG is written by hand, one section per version, in plain English.

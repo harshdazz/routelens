@@ -121,9 +121,10 @@ Details decided while building (fingerprints in the `route` field, renames, dele
 - [x] Marketplace-ready `.vsix`: PNG icon, gallery metadata, CHANGELOG inside, and packaging always builds first (`vscode:prepublish`)
 - [x] npm-ready `@routelens/cli` and `@routelens/mcp`: public, one bundled file each, checked with `npm pack` and a clean install
 - [x] Release workflow: tag `vX.Y.Z` → the same checks as CI → Harsh approves → npm and Open VSX (trusted publishing), Marketplace, GitHub Release. The package job's steps were run locally; the publish job runs for the first time with v0.1.0
-- [ ] Setup (Harsh, [Releasing](releasing.md)): the `release` environment with a required reviewer, Marketplace publisher `harshdazz`, Open VSX namespace `harshdazz`, npm organization `routelens`; first npm publish by hand, then trusted publishing for npm and Open VSX
+- [x] Setup (Harsh, 2026-10-23, [Releasing](releasing.md)): the `release` environment with a required reviewer, Marketplace publisher `harshdazz` (hand upload, no token), Open VSX namespace `harshdazz`, npm organization `routelens`; both npm packages published by hand at 0.0.1, then trusted publishing for npm. Open VSX trusted publishing has to wait until after the first release (see below)
 - [x] README with demo GIF, screenshots and a quick start (2026-10-23). `pnpm demo:record` records them in a real VS Code with the packaged `.vsix` on `fixtures/buggy-api`: zero setup → ▶ Send starts the server → Test everything (5 passed, 1 failed) → Connect an AI Agent → the one-line fix → 6 passed. The fix in the GIF is typed by the script; real agent runs are in M5's acceptance note
 - [ ] v0.1.0 published on the Marketplace, Open VSX and npm; install from the Marketplace works on a clean machine
+- [ ] Open VSX trusted publishing, once v0.1.0 is on Open VSX (by hand) and the Marketplace: claim the `harshdazz` namespace (Option 1), add the trusted publisher, set `OVSX_TRUSTED_PUBLISHING`. From then on the workflow publishes to Open VSX
 - [ ] Landing page (Next.js) with the demo
 - [ ] LinkedIn launch post + GitHub repo polish (topics, description, pinned)
 - [ ] Get 5 real users to try it; log feedback
