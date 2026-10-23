@@ -1,6 +1,6 @@
 # Contributing to RouteLens
 
-Thanks for your interest! RouteLens is pre-alpha, so the best help right now is trying it on a real Next.js or Express project and [opening an issue](https://github.com/harshdazz/routelens/issues) about what worked, what didn't, and which route patterns it missed.
+Thanks for your interest! RouteLens is an early version (v0.1), so the best help right now is trying it on a real Next.js or Express project and [opening an issue](https://github.com/harshdazz/routelens/issues) about what worked, what didn't, and which route patterns it missed.
 
 ## Set up
 

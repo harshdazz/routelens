@@ -10,7 +10,7 @@ You can expect a first answer within a week. Once a fix is ready, you'll be cred
 
 ## Supported versions
 
-RouteLens is pre-alpha: only the latest code on `main` is supported.
+RouteLens is an early version (v0.1): only the latest release and the latest code on `main` get fixes.
 
 ## What counts
 
