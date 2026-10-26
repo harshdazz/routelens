@@ -66,4 +66,4 @@
 
 ## Coming next
 
-The v0.1 launch (M6): Marketplace and Open VSX, npm packages for the CLI and the MCP server, and a demo. See the [roadmap](https://github.com/harshdazz/routelens/blob/main/docs/03-roadmap.md).
+v0.2 (M7), a built-in AI brain: **Explain failure** on a failing request (the cause, the fix and a link to the line), using Copilot's model in VS Code, Ollama on your machine or your own API key. See the [roadmap](https://github.com/harshdazz/routelens/blob/main/docs/03-roadmap.md).

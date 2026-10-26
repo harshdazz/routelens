@@ -19,7 +19,7 @@
 
 RouteLens is a VS Code extension for Next.js and Express developers. It finds your API, writes a request for every route from your code and your zod schemas, runs them for you, and shows the result right above the handler. It also lets the AI agent you already use (Copilot, Claude Code, Cursor) test your API and fix what's broken.
 
-> **Status: preview (v0.1).** Milestones M0–M5 are built and tested: core client, zero setup, reads your code, autopilot, and AI agents through MCP. RouteLens is on the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=harshdazz.routelens-api-client) as **RouteLens API Client**, and the CLI and the MCP server are on npm. Open VSX (for Cursor and VSCodium) is on its way; until then, install the `.vsix` from [GitHub Releases](https://github.com/harshdazz/routelens/releases) there (see [Quick start](#quick-start)).
+> **Status: preview (v0.1).** Milestones M0–M5 are built and tested: core client, zero setup, reads your code, autopilot, and AI agents through MCP. RouteLens is on the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=harshdazz.routelens-api-client) and on [Open VSX](https://open-vsx.org/extension/harshdazz/routelens-api-client) (for Cursor and VSCodium) as **RouteLens API Client**, and the CLI and the MCP server are on npm.
 
 <p align="center">
   <img src="docs/images/demo.gif" alt="RouteLens in VS Code on a small todo API: it finds the API and its 6 routes, offers to start the server when ▶ Send is clicked, shows 200 OK above the handler, runs every route with one click (5 pass, 1 fails with a 404), offers to connect an AI agent, and after a one-line fix all 6 routes pass." width="100%">
@@ -28,7 +28,7 @@ RouteLens is a VS Code extension for Next.js and Express developers. It finds yo
 
 ## Quick start
 
-1. **Install.** In VS Code, open the Extensions view and search for **RouteLens API Client** by harshdazz, or open its [Marketplace page](https://marketplace.visualstudio.com/items?itemName=harshdazz.routelens-api-client). You need VS Code 1.95 or newer. In Cursor or VSCodium, download `routelens-api-client-<version>.vsix` from [GitHub Releases](https://github.com/harshdazz/routelens/releases), then choose **Install from VSIX...** in the Extensions view's **`...`** menu.
+1. **Install.** In VS Code, open the Extensions view and search for **RouteLens API Client** by harshdazz, or open its [Marketplace page](https://marketplace.visualstudio.com/items?itemName=harshdazz.routelens-api-client). You need VS Code 1.95 or newer. Cursor and VSCodium install it from [Open VSX](https://open-vsx.org/extension/harshdazz/routelens-api-client): search for **RouteLens API Client** in the Extensions view the same way. In other editors, download `routelens-api-client-<version>.vsix` from [GitHub Releases](https://github.com/harshdazz/routelens/releases), then choose **Install from VSIX...** in the Extensions view's **`...`** menu.
 2. **Open your API project** (Next.js or Express). RouteLens finds your server's address and every route, and creates `.routelens/` with a request for each route.
 3. **Click ▶ Send** above a route handler. If your server is off, click **▶ Start server**.
 4. **Click ▶▶ Test everything** at the top of the RouteLens sidebar to run every route at once.
@@ -220,17 +220,17 @@ docs/             lifecycle plan, product spec, architecture, roadmap, decisions
 
 ## Roadmap
 
-| Milestone                   | Status                                                                                                      |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| M0 Foundation               | ✅ done                                                                                                     |
-| M1 Core client              | ✅ done                                                                                                     |
-| M2 Zero setup               | ✅ done                                                                                                     |
-| M3 Reads your code          | ✅ done                                                                                                     |
-| M4 Autopilot                | ✅ done (tried by hand, green in CI)                                                                        |
-| M5 Works with your AI agent | ✅ done (Claude Code and Copilot checked)                                                                   |
-| M6 Launch v0.1              | 🟡 in progress: v0.1.1 on the Marketplace and npm (2026-10-23); Open VSX, landing page and launch post next |
-| M7 Built-in AI brain (v0.2) | planned                                                                                                     |
-| M8 Essentials (v0.3)        | planned                                                                                                     |
+| Milestone                   | Status                                                                                                                                                 |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| M0 Foundation               | ✅ done                                                                                                                                                |
+| M1 Core client              | ✅ done                                                                                                                                                |
+| M2 Zero setup               | ✅ done                                                                                                                                                |
+| M3 Reads your code          | ✅ done                                                                                                                                                |
+| M4 Autopilot                | ✅ done (tried by hand, green in CI)                                                                                                                   |
+| M5 Works with your AI agent | ✅ done (Claude Code and Copilot checked)                                                                                                              |
+| M6 Launch v0.1              | 🟡 in progress: v0.1.1 on the Marketplace, Open VSX and npm (2026-10-23), [landing page](https://heyharshdubey.vercel.app/routelens); launch post next |
+| M7 Built-in AI brain (v0.2) | planned                                                                                                                                                |
+| M8 Essentials (v0.3)        | planned                                                                                                                                                |
 
 Details and dates are in the [roadmap](docs/03-roadmap.md).
 
